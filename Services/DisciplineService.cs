@@ -70,7 +70,21 @@ public class DisciplineService : IDisciplineService
                         Name = t.Name,
                         Description = t.Description,
                         OrderIndex = t.OrderIndex,
-                        LecturesCount = t.Lectures.Count
+                        LecturesCount = t.Lectures.Count,
+                        Lectures = t.Lectures
+                            .OrderBy(l => l.OrderIndex).ThenBy(l => l.Id)
+                            .Select(l => new LectureListItemViewModel
+                            {
+                                Id = l.Id,
+                                Title = l.Title,
+                                OrderIndex = l.OrderIndex,
+                                IsPublished = l.IsPublished,
+                                MaterialFileName = l.MaterialFileName,
+                                PassingPercentage = l.PassingPercentage,
+                                MaxAttempts = l.MaxAttempts,
+                                ControlQuestionsCount = l.ControlQuestions.Count
+                            })
+                            .ToList()
                     })
                     .ToList()
             })

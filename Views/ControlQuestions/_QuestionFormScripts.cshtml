@@ -1,0 +1,16 @@
+﻿<script>
+    (function () {
+        const typeSelect = document.getElementById('questionType');
+        const shortTextBlock = document.getElementById('shortTextBlock');
+        const choiceBlock = document.getElementById('choiceBlock');
+
+        function update() {
+            const isChoice = typeSelect.value === '2'; // 2 = выбор одного варианта
+            shortTextBlock.classList.toggle('d-none', isChoice);
+            choiceBlock.classList.toggle('d-none', !isChoice);
+        }
+
+        typeSelect.addEventListener('change', update);
+        update();
+    })();
+</script>

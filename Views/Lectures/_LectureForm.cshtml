@@ -1,0 +1,68 @@
+﻿@model LectureFormViewModel
+
+<div class="mb-3">
+    <label asp-for="Title" class="form-label"></label>
+    <input asp-for="Title" class="form-control" />
+    <span asp-validation-for="Title" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="OrderIndex" class="form-label"></label>
+    <input asp-for="OrderIndex" class="form-control" type="number" min="1" max="1000" />
+    <span asp-validation-for="OrderIndex" class="text-danger"></span>
+    <div class="form-text">Потом порядок можно менять кнопками со стрелками на странице дисциплины.</div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="PassingPercentage" class="form-label"></label>
+        <input asp-for="PassingPercentage" class="form-control" type="number" min="1" max="100" />
+        <span asp-validation-for="PassingPercentage" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="MaxAttempts" class="form-label"></label>
+        <input asp-for="MaxAttempts" class="form-control" type="number" min="1" max="100" />
+        <span asp-validation-for="MaxAttempts" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="form-check mb-2">
+    <input asp-for="IsPublished" class="form-check-input" />
+    <label asp-for="IsPublished" class="form-check-label"></label>
+</div>
+
+<div class="form-check mb-3">
+    <input asp-for="RequireControlQuestions" class="form-check-input" />
+    <label asp-for="RequireControlQuestions" class="form-check-label"></label>
+</div>
+
+<div class="mb-3">
+    <label asp-for="MaterialFile" class="form-label"></label>
+
+    @if (Model.Id > 0 && !string.IsNullOrEmpty(Model.CurrentMaterialFileName))
+    {
+        <div class="alert alert-light border d-flex flex-wrap align-items-center gap-2 py-2">
+            <span>Текущий файл: <strong>@Model.CurrentMaterialFileName</strong></span>
+            <a asp-controller="Materials" asp-action="Download" asp-route-id="@Model.Id"
+               target="_blank" class="btn btn-sm btn-outline-primary">Открыть</a>
+            <a asp-controller="Materials" asp-action="Download" asp-route-id="@Model.Id" asp-route-download="true"
+               class="btn btn-sm btn-outline-secondary">Скачать</a>
+            <button type="submit" asp-action="DeleteMaterial" asp-route-id="@Model.Id" formnovalidate
+                    class="btn btn-sm btn-outline-danger"
+                    data-confirm="Удалить файл материала?">
+                Удалить файл
+            </button>
+        </div>
+        <div class="form-text mb-1">Чтобы заменить файл, выберите новый ниже.</div>
+    }
+
+    <input asp-for="MaterialFile" type="file" class="form-control" accept=".pdf,.docx" />
+    <span asp-validation-for="MaterialFile" class="text-danger"></span>
+    <div class="form-text">Форматы PDF и DOCX, размер до 20 МБ.</div>
+</div>

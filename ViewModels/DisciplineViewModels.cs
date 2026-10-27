@@ -44,6 +44,7 @@ public class DisciplineDetailsViewModel
 }
 
 // Строка в списке тем
+// Строка в списке тем
 public class TopicListItemViewModel
 {
     public int Id { get; set; }
@@ -51,4 +52,18 @@ public class TopicListItemViewModel
     public string? Description { get; set; }
     public int OrderIndex { get; set; }
     public int LecturesCount { get; set; }
+    public List<LectureListItemViewModel> Lectures { get; set; } = new();
+}
+
+// Лекция в списке внутри темы
+public class LectureListItemViewModel
+{
+    public int Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public int OrderIndex { get; set; }
+    public bool IsPublished { get; set; }
+    public string? MaterialFileName { get; set; }
+    public int PassingPercentage { get; set; }
+    public int MaxAttempts { get; set; }
+    public int ControlQuestionsCount { get; set; }
 }

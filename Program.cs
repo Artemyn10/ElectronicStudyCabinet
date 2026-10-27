@@ -46,9 +46,13 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
+
 // Сервисы бизнес-логики
 builder.Services.AddScoped<IDisciplineService, DisciplineService>();
 builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<ILectureService, LectureService>();
+builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<IControlQuestionService, ControlQuestionService>();
 
 var app = builder.Build();
 
@@ -61,6 +65,7 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         db.Database.Migrate();
         await DbInitializer.InitializeAsync(scope.ServiceProvider);
+        await DemoDataSeeder.SeedAsync(scope.ServiceProvider);
         logger.LogInformation("База данных готова.");
     }
     catch (Exception ex)

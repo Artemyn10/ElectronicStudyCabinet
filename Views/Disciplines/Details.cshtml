@@ -1,6 +1,7 @@
 ﻿@model DisciplineDetailsViewModel
 @{
     ViewData["Title"] = Model.Name;
+    var lectureNumber = 0; // сквозной номер лекции в дисциплине
 }
 
 <nav aria-label="breadcrumb">
@@ -36,7 +37,7 @@
 </div>
 
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h2 class="h4 mb-0">Темы</h2>
+    <h2 class="h4 mb-0">Темы и лекции</h2>
     <a asp-controller="Topics" asp-action="Create" asp-route-disciplineId="@Model.Id" class="btn btn-primary">Добавить тему</a>
 </div>
 
@@ -44,43 +45,114 @@
 {
     <div class="alert alert-info">В этой дисциплине пока нет тем.</div>
 }
-else
+
+@foreach (var topic in Model.Topics)
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle bg-white shadow-sm">
-            <thead class="table-light">
-                <tr>
-                    <th style="width: 6rem;">Порядок</th>
-                    <th>Название</th>
-                    <th class="text-center">Лекций</th>
-                    <th class="text-end">Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var topic in Model.Topics)
-                {
-                    <tr>
-                        <td>@topic.OrderIndex</td>
-                        <td>
-                            <div class="fw-semibold">@topic.Name</div>
-                            @if (!string.IsNullOrWhiteSpace(topic.Description))
-                            {
-                                <div class="text-muted small">@topic.Description</div>
-                            }
-                        </td>
-                        <td class="text-center">@topic.LecturesCount</td>
-                        <td class="text-end text-nowrap">
-                            <a asp-controller="Topics" asp-action="Edit" asp-route-id="@topic.Id" class="btn btn-sm btn-outline-secondary">Изменить</a>
-                            <form asp-controller="Topics" asp-action="Delete" asp-route-id="@topic.Id" method="post" class="d-inline"
-                                  data-confirm="Удалить тему «@topic.Name»?">
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="card shadow-sm mb-3">
+        <div class="card-header bg-white">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <span class="text-muted">Тема @topic.OrderIndex.</span>
+                    <strong>@topic.Name</strong>
+                </div>
+                <div class="text-nowrap">
+                    <a asp-controller="Lectures" asp-action="Create" asp-route-topicId="@topic.Id"
+                       class="btn btn-sm btn-primary">Добавить лекцию</a>
+                    <a asp-controller="Topics" asp-action="Edit" asp-route-id="@topic.Id"
+                       class="btn btn-sm btn-outline-secondary">Изменить тему</a>
+                    <form asp-controller="Topics" asp-action="Delete" asp-route-id="@topic.Id" method="post" class="d-inline"
+                          data-confirm="Удалить тему «@topic.Name»?">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить тему</button>
+                    </form>
+                </div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(topic.Description))
+            {
+                <div class="text-muted small mt-1">@topic.Description</div>
+            }
+        </div>
+
+        @if (!topic.Lectures.Any())
+        {
+            <div class="card-body text-muted">В этой теме пока нет лекций.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 3.5rem;">№</th>
+                            <th>Лекция</th>
+                            <th>Материал</th>
+                            <th>Тест</th>
+                            <th>Статус</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < topic.Lectures.Count; i++)
+                        {
+                            var lecture = topic.Lectures[i];
+                            lectureNumber++;
+
+                            <tr>
+                                <td>@lectureNumber</td>
+                                <td class="fw-semibold">@lecture.Title</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(lecture.MaterialFileName))
+                                    {
+                                        <a asp-controller="Materials" asp-action="Download" asp-route-id="@lecture.Id"
+                                           target="_blank" class="text-decoration-none">@lecture.MaterialFileName</a>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">нет файла</span>
+                                    }
+                                </td>
+                                <td class="text-nowrap small">
+                                    от @lecture.PassingPercentage%, попыток: @lecture.MaxAttempts
+                                </td>
+                                <td>
+                                    @if (lecture.IsPublished)
+                                    {
+                                        <span class="badge bg-success">Опубликована</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Черновик</span>
+                                    }
+                                </td>
+                                <td class="text-end text-nowrap">
+                                    <form asp-controller="Lectures" asp-action="Move" asp-route-id="@lecture.Id"
+                                          asp-route-up="true" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                title="Выше" disabled="@(i == 0)">
+                                            ↑
+                                        </button>
+                                    </form>
+                                    <form asp-controller="Lectures" asp-action="Move" asp-route-id="@lecture.Id"
+                                          asp-route-up="false" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                title="Ниже" disabled="@(i == topic.Lectures.Count - 1)">
+                                            ↓
+                                        </button>
+                                    </form>
+                                    <a asp-controller="ControlQuestions" asp-action="Index" asp-route-lectureId="@lecture.Id"
+                                       class="btn btn-sm btn-outline-primary">Вопросы (@lecture.ControlQuestionsCount)</a>
+                                    <a asp-controller="Lectures" asp-action="Edit" asp-route-id="@lecture.Id"
+                                       class="btn btn-sm btn-outline-secondary">Изменить</a>
+                                    <form asp-controller="Lectures" asp-action="Delete" asp-route-id="@lecture.Id"
+                                          method="post" class="d-inline"
+                                          data-confirm="Удалить лекцию «@lecture.Title»?">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 }
-
-<p class="text-muted small">Добавление лекций в темы появится на следующем этапе.</p>

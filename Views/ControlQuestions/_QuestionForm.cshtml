@@ -1,0 +1,74 @@
+﻿@model ControlQuestionFormViewModel
+
+<div class="mb-3">
+    <label asp-for="Text" class="form-label"></label>
+    <textarea asp-for="Text" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Text" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label class="form-label" for="questionType">Тип вопроса</label>
+    <select name="QuestionType" id="questionType" class="form-select">
+        <option value="@((int)QuestionType.ShortText)" selected="@(Model.QuestionType == QuestionType.ShortText)">
+            Краткий текстовый ответ
+        </option>
+        <option value="@((int)QuestionType.SingleChoice)" selected="@(Model.QuestionType == QuestionType.SingleChoice)">
+            Выбор одного правильного ответа
+        </option>
+    </select>
+    <span asp-validation-for="QuestionType" class="text-danger"></span>
+</div>
+
+<!-- Блок для вопроса с кратким ответом -->
+<div id="shortTextBlock">
+    <div class="mb-3">
+        <label asp-for="CorrectAnswer" class="form-label"></label>
+        <input asp-for="CorrectAnswer" class="form-control" />
+        <span asp-validation-for="CorrectAnswer" class="text-danger"></span>
+        <div class="form-text">
+            При проверке ответа студента лишние пробелы и регистр букв не учитываются.
+        </div>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="RequiresManualReview" class="form-check-input" />
+        <label asp-for="RequiresManualReview" class="form-check-label"></label>
+        <div class="form-text">
+            Лекция не будет считаться завершённой, пока вы не проверите ответ и не примете его.
+        </div>
+    </div>
+</div>
+
+<!-- Блок для вопроса с выбором варианта -->
+<div id="choiceBlock" class="mb-3">
+    <label class="form-label">Варианты ответа</label>
+    <div class="form-text mb-2">
+        Заполните не менее двух вариантов и отметьте правильный. Пустые поля игнорируются.
+    </div>
+
+    @for (var i = 0; i < ControlQuestionFormViewModel.OptionSlots; i++)
+    {
+        <div class="input-group mb-2">
+            <div class="input-group-text">
+                <input type="radio" name="CorrectOptionIndex" value="@i"
+                       class="form-check-input mt-0"
+                       checked="@(Model.CorrectOptionIndex == i)"
+                       aria-label="Правильный вариант @(i + 1)" />
+            </div>
+            <input type="hidden" asp-for="Options[i].Id" />
+            <input asp-for="Options[i].Text" class="form-control" placeholder="Вариант @(i + 1)" />
+        </div>
+        <span asp-validation-for="Options[i].Text" class="text-danger"></span>
+    }
+</div>
+
+<div class="form-check mb-3">
+    <input asp-for="IsRequired" class="form-check-input" />
+    <label asp-for="IsRequired" class="form-check-label"></label>
+</div>
+
+<div class="mb-3">
+    <label asp-for="OrderIndex" class="form-label"></label>
+    <input asp-for="OrderIndex" class="form-control" type="number" min="1" max="1000" />
+    <span asp-validation-for="OrderIndex" class="text-danger"></span>
+</div>

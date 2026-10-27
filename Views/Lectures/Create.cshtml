@@ -1,0 +1,40 @@
+﻿@model LectureFormViewModel
+@{
+    ViewData["Title"] = "Новая лекция";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId">@Model.DisciplineName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Новая лекция</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Новая лекция</h1>
+        <p class="text-muted">Тема: @Model.TopicName</p>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Create" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input type="hidden" asp-for="TopicId" />
+
+                    <partial name="_LectureForm" model="Model" />
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId"
+                       class="btn btn-outline-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

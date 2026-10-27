@@ -1,9 +1,11 @@
 ﻿// Общая обработка всех форм на сайте
 document.addEventListener('submit', function (event) {
     const form = event.target;
+    const submitter = event.submitter;
 
-    // 1. Подтверждение удаления: <form data-confirm="Текст вопроса">
-    if (form.dataset.confirm && !window.confirm(form.dataset.confirm)) {
+    // 1. Подтверждение: <form data-confirm="..."> или <button data-confirm="...">
+    const confirmText = (submitter && submitter.dataset.confirm) || form.dataset.confirm;
+    if (confirmText && !window.confirm(confirmText)) {
         event.preventDefault();
         return;
     }
@@ -20,9 +22,13 @@ document.addEventListener('submit', function (event) {
     }
 
     form.dataset.submitted = 'true';
-    form.querySelectorAll('button[type="submit"]').forEach(function (button) {
-        button.disabled = true;
-    });
+
+    // Кнопки блокируем чуть позже, когда браузер уже начал отправку
+    setTimeout(function () {
+        form.querySelectorAll('button[type="submit"]').forEach(function (button) {
+            button.disabled = true;
+        });
+    }, 0);
 });
 
 // Если пользователь вернулся кнопкой "Назад", форма снова должна работать

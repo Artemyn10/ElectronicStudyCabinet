@@ -1,0 +1,45 @@
+﻿@model ControlQuestionFormViewModel
+@{
+    ViewData["Title"] = "Изменение вопроса";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId">@Model.DisciplineName</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index" asp-route-lectureId="@Model.LectureId">Контрольные вопросы</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Изменение вопроса</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Изменение вопроса</h1>
+        <p class="text-muted">Лекция: @Model.LectureTitle</p>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="LectureId" />
+
+                    <partial name="_QuestionForm" model="Model" />
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a asp-action="Index" asp-route-lectureId="@Model.LectureId"
+                       class="btn btn-outline-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <partial name="_QuestionFormScripts" />
+}

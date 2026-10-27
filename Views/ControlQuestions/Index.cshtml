@@ -1,0 +1,103 @@
+﻿@model ControlQuestionListViewModel
+@{
+    ViewData["Title"] = "Контрольные вопросы";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId">@Model.DisciplineName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Контрольные вопросы</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+    <div>
+        <h1 class="h3 mb-0">Контрольные вопросы</h1>
+        <div class="text-muted">Лекция: @Model.LectureTitle (тема «@Model.TopicName»)</div>
+    </div>
+    <a asp-action="Create" asp-route-lectureId="@Model.LectureId" class="btn btn-primary">Добавить вопрос</a>
+</div>
+
+<p class="mb-3">
+    @if (Model.RequireControlQuestions)
+    {
+        <span class="badge bg-warning text-dark">Обязательны для открытия следующей лекции</span>
+    }
+    else
+    {
+        <span class="badge bg-secondary">Не влияют на открытие следующей лекции</span>
+    }
+    <a asp-controller="Lectures" asp-action="Edit" asp-route-id="@Model.LectureId"
+       class="small ms-2">изменить в настройках лекции</a>
+</p>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Для этой лекции пока нет контрольных вопросов.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 5rem;">Порядок</th>
+                    <th>Вопрос</th>
+                    <th>Тип</th>
+                    <th>Правильный ответ</th>
+                    <th>Условия</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>@item.OrderIndex</td>
+                        <td>@item.Text</td>
+                        <td>
+                            @if (item.QuestionType == QuestionType.SingleChoice)
+                            {
+                                <span class="badge bg-info text-dark">Выбор варианта</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-primary">Краткий ответ</span>
+                            }
+                        </td>
+                        <td>
+                            @if (string.IsNullOrWhiteSpace(item.CorrectAnswerDisplay))
+                            {
+                                <span class="text-muted">не указан</span>
+                            }
+                            else
+                            {
+                                @item.CorrectAnswerDisplay
+                            }
+                        </td>
+                        <td>
+                            @if (item.IsRequired)
+                            {
+                                <span class="badge bg-warning text-dark">Обязательный</span>
+                            }
+                            @if (item.RequiresManualReview)
+                            {
+                                <span class="badge bg-secondary">Ручная проверка</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Изменить</a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
+                                  data-confirm="Удалить этот вопрос?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
