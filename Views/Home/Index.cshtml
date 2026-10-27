@@ -1,0 +1,91 @@
+﻿@{
+    ViewData["Title"] = "Главная";
+}
+
+<!-- Главный блок -->
+<section class="hero p-4 p-md-5 mb-4">
+    <h1 class="display-6 fw-bold">Электронный учебный кабинет</h1>
+    <p class="lead mb-4">
+        Преподаватель размещает лекции, контрольные вопросы и тесты.
+        Студент изучает материал по порядку и проверяет свои знания.
+    </p>
+
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        if (User.IsInRole(AppRoles.Teacher))
+        {
+            <a class="btn btn-light btn-lg" asp-controller="Teacher" asp-action="Index">Перейти в панель преподавателя</a>
+        }
+        else
+        {
+            <a class="btn btn-light btn-lg" asp-controller="Student" asp-action="Index">Перейти в личный кабинет</a>
+        }
+    }
+    else
+    {
+        <a class="btn btn-light btn-lg me-2 mb-2" asp-controller="Account" asp-action="Login">Войти</a>
+        <a class="btn btn-outline-light btn-lg mb-2" asp-controller="Account" asp-action="Register">Зарегистрироваться</a>
+    }
+</section>
+
+<!-- Возможности -->
+<section class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Преподавателю</h2>
+                <p class="card-text text-muted mb-0">
+                    Создавайте дисциплины, темы и лекции, загружайте материалы,
+                    составляйте тесты и следите за результатами каждого студента.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Студенту</h2>
+                <p class="card-text text-muted mb-0">
+                    Изучайте лекции, отвечайте на контрольные вопросы,
+                    проходите тесты и смотрите свой прогресс по дисциплинам.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h2 class="h5">Последовательное изучение</h2>
+                <p class="card-text text-muted mb-0">
+                    Следующая лекция открывается только после того, как выполнены
+                    задания и пройден тест предыдущей.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Как это работает -->
+<section class="card shadow-sm">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Как это работает</h2>
+        <div class="row g-3">
+            <div class="col-md-6 d-flex gap-3">
+                <span class="step-number">1</span>
+                <div>Откройте лекцию и изучите учебный материал.</div>
+            </div>
+            <div class="col-md-6 d-flex gap-3">
+                <span class="step-number">2</span>
+                <div>Ответьте на обязательные контрольные вопросы.</div>
+            </div>
+            <div class="col-md-6 d-flex gap-3">
+                <span class="step-number">3</span>
+                <div>Пройдите тест и наберите проходной балл.</div>
+            </div>
+            <div class="col-md-6 d-flex gap-3">
+                <span class="step-number">4</span>
+                <div>Следующая лекция откроется автоматически.</div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,20 @@
+﻿@{
+    var alerts = new[]
+    {
+        (Key: "Success", Css: "success"),
+        (Key: "Error", Css: "danger"),
+        (Key: "Warning", Css: "warning"),
+        (Key: "Info", Css: "info")
+    };
+}
+
+@foreach (var alert in alerts)
+{
+    if (TempData[alert.Key] is string message && !string.IsNullOrEmpty(message))
+    {
+        <div class="alert alert-@(alert.Css) alert-dismissible fade show" role="alert">
+            @message
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрыть"></button>
+        </div>
+    }
+}

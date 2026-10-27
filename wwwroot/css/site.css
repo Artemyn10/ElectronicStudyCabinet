@@ -1,0 +1,65 @@
+html {
+    font-size: 15px;
+}
+
+body {
+    background-color: #f5f7fa;
+}
+
+/* Главный блок на главной странице */
+.hero {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    color: #fff;
+    border-radius: 0.75rem;
+}
+
+/* Круглая цифра в блоке "Как это работает" */
+.step-number {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Статусы лекций (используем на этапах 8 и 13) */
+.status-completed {
+    background-color: #198754;
+    color: #fff;
+}
+/* Завершена */
+.status-available {
+    background-color: #0d6efd;
+    color: #fff;
+}
+/* Доступна */
+.status-locked {
+    background-color: #6c757d;
+    color: #fff;
+}
+/* Заблокирована */
+.status-progress {
+    background-color: #0dcaf0;
+    color: #000;
+}
+/* В процессе */
+.status-pending {
+    background-color: #ffc107;
+    color: #000;
+}
+/* Ожидает проверки */
+.status-notstudied {
+    background-color: #adb5bd;
+    color: #000;
+}
+/* Не изучена */
+
+/* Заблокированная лекция в списке выглядит приглушённо */
+.lecture-item-locked {
+    opacity: 0.65;
+}

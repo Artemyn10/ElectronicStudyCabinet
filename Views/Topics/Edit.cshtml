@@ -1,0 +1,31 @@
+﻿@model TopicFormViewModel
+@{
+    ViewData["Title"] = "Изменение темы";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Изменение темы</h1>
+        <p class="text-muted">Дисциплина: @Model.DisciplineName</p>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+                    <input type="hidden" asp-for="DisciplineId" />
+
+                    <partial name="_TopicForm" model="Model" />
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId"
+                       class="btn btn-outline-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

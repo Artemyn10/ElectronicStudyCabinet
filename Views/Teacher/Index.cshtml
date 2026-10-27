@@ -1,0 +1,10 @@
+﻿@{
+    ViewData["Title"] = "Панель преподавателя";
+}
+
+<h1 class="h3">Панель преподавателя</h1>
+<p>Здравствуйте, @User.Identity?.Name!</p>
+
+<a asp-controller="Disciplines" asp-action="Index" class="btn btn-primary">Дисциплины</a>
+
+<p class="text-muted mt-3">Полноценная панель со статистикой появится на этапе 14.</p>

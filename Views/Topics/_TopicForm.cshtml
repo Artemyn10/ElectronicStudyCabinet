@@ -1,0 +1,20 @@
+﻿@model TopicFormViewModel
+
+<div class="mb-3">
+    <label asp-for="Name" class="form-label"></label>
+    <input asp-for="Name" class="form-control" />
+    <span asp-validation-for="Name" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="OrderIndex" class="form-label"></label>
+    <input asp-for="OrderIndex" class="form-control" type="number" min="1" max="1000" />
+    <span asp-validation-for="OrderIndex" class="text-danger"></span>
+    <div class="form-text">Темы отображаются по возрастанию этого числа.</div>
+</div>
