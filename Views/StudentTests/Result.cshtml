@@ -1,0 +1,95 @@
+﻿@model StudentTestResultViewModel
+@{
+    ViewData["Title"] = "Результат теста";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Student" asp-action="Index">Мой кабинет</a></li>
+        <li class="breadcrumb-item">
+            <a asp-action="Index" asp-route-lectureId="@Model.LectureId">Тест</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Результат</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-0">Результат теста</h1>
+<div class="text-muted mb-3">
+    @Model.LectureTitle · @Model.DisciplineName · Попытка @Model.AttemptNumber
+    · @Model.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+</div>
+
+@if (Model.IsPassed)
+{
+    <div class="alert alert-success">Тест успешно пройден</div>
+}
+else
+{
+    <div class="alert alert-warning">Недостаточно правильных ответов</div>
+}
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <p class="mb-1">Правильных ответов: <strong>@Model.CorrectAnswers из @Model.TotalQuestions</strong></p>
+        <p class="mb-1">Результат: <strong>@Model.ScorePercentage.ToString("0.#")%</strong></p>
+        <p class="mb-1">Проходной балл: <strong>@Model.PassingPercentage%</strong></p>
+        <p class="mb-3">
+            Статус:
+            @if (Model.IsPassed)
+            {
+                <span class="badge bg-success">Тест пройден</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark">Тест не пройден</span>
+            }
+        </p>
+
+        <p class="mb-3 text-muted">
+            Использовано попыток: @Model.AttemptsUsed из @Model.MaxAttempts (осталось: @Model.AttemptsLeft)
+        </p>
+
+        @if (Model.CanRetry)
+        {
+            <form asp-action="Start" asp-route-lectureId="@Model.LectureId" method="post" class="d-inline">
+                <button type="submit" class="btn btn-primary">Пройти ещё раз</button>
+            </form>
+        }
+        else if (!Model.IsPassed)
+        {
+            <div class="alert alert-danger">Количество попыток исчерпано.</div>
+        }
+
+        <a asp-controller="Student" asp-action="Index" class="btn btn-outline-secondary">В личный кабинет</a>
+    </div>
+</div>
+
+@if (Model.History.Count > 1)
+{
+    <h2 class="h5">Все попытки</h2>
+    <div class="table-responsive">
+        <table class="table align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>№</th>
+                    <th>Дата</th>
+                    <th>Правильных</th>
+                    <th>Результат</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.History)
+                {
+                    <tr class="@(row.AttemptId == Model.AttemptId ? "table-active" : "")">
+                        <td>@row.AttemptNumber</td>
+                        <td>@row.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@row.CorrectAnswers из @row.TotalQuestions</td>
+                        <td>@row.ScorePercentage.ToString("0.#")%</td>
+                        <td>@(row.IsPassed ? "Пройден" : "Не пройден")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

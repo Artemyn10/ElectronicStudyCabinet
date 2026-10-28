@@ -1,0 +1,34 @@
+﻿@model TestQuestionFormViewModel
+
+<div class="mb-3">
+    <label asp-for="Text" class="form-label"></label>
+    <textarea asp-for="Text" class="form-control" rows="3"></textarea>
+    <span asp-validation-for="Text" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Варианты ответа</label>
+    <div class="form-text mb-2">
+        Заполните не менее двух вариантов и отметьте один правильный. Пустые поля игнорируются.
+    </div>
+
+    @for (var i = 0; i < TestQuestionFormViewModel.OptionSlots; i++)
+    {
+        <div class="input-group mb-2">
+            <div class="input-group-text">
+                <input type="radio" name="CorrectOptionIndex" value="@i"
+                       class="form-check-input mt-0"
+                       checked="@(Model.CorrectOptionIndex == i)"
+                       aria-label="Правильный вариант @(i + 1)" />
+            </div>
+            <input asp-for="Options[i].Text" class="form-control" placeholder="Вариант @(i + 1)" />
+        </div>
+        <span asp-validation-for="Options[i].Text" class="text-danger"></span>
+    }
+</div>
+
+<div class="mb-3">
+    <label asp-for="OrderIndex" class="form-label"></label>
+    <input asp-for="OrderIndex" class="form-control" type="number" min="1" max="1000" />
+    <span asp-validation-for="OrderIndex" class="text-danger"></span>
+</div>

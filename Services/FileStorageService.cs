@@ -5,6 +5,7 @@ public interface IFileStorageService
     string? Validate(IFormFile file);
     string GetSafeFileName(IFormFile file);
     Task<string> SaveAsync(IFormFile file);
+    Task<string> CopyFromAsync(string sourcePath);
     Stream? OpenRead(string storedFileName);
     string GetContentType(string storedFileName);
     void Delete(string? storedFileName);
@@ -82,6 +83,19 @@ public class FileStorageService : IFileStorageService
 
         await using var target = new FileStream(path, FileMode.CreateNew);
         await file.CopyToAsync(target);
+
+        return storedName;
+    }
+    // Копирует готовый файл с диска в хранилище и возвращает сохранённое имя
+    public async Task<string> CopyFromAsync(string sourcePath)
+    {
+        var extension = Path.GetExtension(sourcePath).ToLowerInvariant();
+        var storedName = $"{Guid.NewGuid():N}{extension}";
+        var target = Path.Combine(_root, storedName);
+
+        await using var source = new FileStream(sourcePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        await using var destination = new FileStream(target, FileMode.CreateNew);
+        await source.CopyToAsync(destination);
 
         return storedName;
     }

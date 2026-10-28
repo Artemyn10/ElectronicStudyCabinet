@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Folder Include="PrivateUploads\" />
+    <Folder Include="DemoFiles\" />
+	  <Content Include="DemoFiles\**" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,116 @@
+﻿@model TestPageViewModel
+@{
+    ViewData["Title"] = "Тест по лекции";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Disciplines" asp-action="Index">Дисциплины</a></li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Disciplines" asp-action="Details" asp-route-id="@Model.DisciplineId">@Model.DisciplineName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Тест</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-0">Тест по лекции</h1>
+<div class="text-muted mb-3">Лекция: @Model.LectureTitle (тема «@Model.TopicName»)</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        Проходной процент: <strong>@Model.PassingPercentage%</strong>
+        · Количество попыток: <strong>@Model.MaxAttempts</strong>
+        <a asp-controller="Lectures" asp-action="Edit" asp-route-id="@Model.LectureId"
+           class="small ms-2">изменить в настройках лекции</a>
+    </div>
+</div>
+
+@if (!Model.HasTest)
+{
+    <div class="alert alert-info">Для этой лекции тест ещё не создан.</div>
+
+    <form asp-action="Create" asp-route-lectureId="@Model.LectureId" method="post">
+        <button type="submit" class="btn btn-primary">Создать тест</button>
+    </form>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            @if (Model.IsPublished)
+            {
+                <span class="badge bg-success">Опубликован</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary">Черновик (студентам не виден)</span>
+            }
+            <span class="text-muted small ms-2">
+                Вопросов: @Model.Questions.Count · Попыток студентов: @Model.AttemptsCount
+            </span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-action="AddQuestion" asp-route-lectureId="@Model.LectureId" class="btn btn-primary">Добавить вопрос</a>
+
+            @if (Model.IsPublished)
+            {
+                <form asp-action="SetPublished" asp-route-lectureId="@Model.LectureId" asp-route-publish="false" method="post">
+                    <button type="submit" class="btn btn-outline-secondary">Снять с публикации</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="SetPublished" asp-route-lectureId="@Model.LectureId" asp-route-publish="true" method="post">
+                    <button type="submit" class="btn btn-success">Опубликовать</button>
+                </form>
+            }
+
+            <form asp-action="Delete" asp-route-lectureId="@Model.LectureId" method="post"
+                  data-confirm="Удалить тест вместе со всеми вопросами?">
+                <button type="submit" class="btn btn-outline-danger"
+                        disabled="@(Model.AttemptsCount > 0)"
+                        title="@(Model.AttemptsCount > 0 ? "Тест уже проходили студенты" : "Удалить тест")">
+                    Удалить тест
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (!Model.Questions.Any())
+    {
+        <div class="alert alert-warning">В тесте пока нет вопросов.</div>
+    }
+
+    @foreach (var question in Model.Questions)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <strong>Вопрос @question.OrderIndex</strong>
+                <div class="text-nowrap">
+                    <a asp-action="EditQuestion" asp-route-id="@question.Id"
+                       class="btn btn-sm btn-outline-secondary">Изменить</a>
+                    <form asp-action="DeleteQuestion" asp-route-id="@question.Id" method="post" class="d-inline"
+                          data-confirm="Удалить этот вопрос?">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card-body pb-2">
+                <p class="mb-2">@question.Text</p>
+            </div>
+            <ul class="list-group list-group-flush">
+                @foreach (var option in question.Options)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>@option.Text</span>
+                        @if (option.IsCorrect)
+                        {
+                            <span class="badge bg-success">правильный</span>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+}

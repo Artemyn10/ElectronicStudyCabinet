@@ -53,6 +53,9 @@ builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddScoped<ILectureService, LectureService>();
 builder.Services.AddSingleton<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IControlQuestionService, ControlQuestionService>();
+builder.Services.AddScoped<ITestService, TestService>();
+builder.Services.AddScoped<ILectureAccessService, LectureAccessService>();
+builder.Services.AddScoped<IStudentTestService, StudentTestService>();
 
 var app = builder.Build();
 
@@ -66,6 +69,8 @@ using (var scope = app.Services.CreateScope())
         db.Database.Migrate();
         await DbInitializer.InitializeAsync(scope.ServiceProvider);
         await DemoDataSeeder.SeedAsync(scope.ServiceProvider);
+        await DemoDataSeeder.SeedExtrasAsync(scope.ServiceProvider);
+        await DemoDataSeeder.SeedTestsAsync(scope.ServiceProvider);
         logger.LogInformation("База данных готова.");
     }
     catch (Exception ex)

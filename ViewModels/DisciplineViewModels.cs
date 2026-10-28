@@ -66,4 +66,7 @@ public class LectureListItemViewModel
     public int PassingPercentage { get; set; }
     public int MaxAttempts { get; set; }
     public int ControlQuestionsCount { get; set; }
+    public bool HasTest { get; set; }
+    public bool TestIsPublished { get; set; }
+    public int TestQuestionsCount { get; set; }
 }

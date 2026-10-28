@@ -140,6 +140,8 @@
                                     </form>
                                     <a asp-controller="ControlQuestions" asp-action="Index" asp-route-lectureId="@lecture.Id"
                                        class="btn btn-sm btn-outline-primary">Вопросы (@lecture.ControlQuestionsCount)</a>
+                                    <a asp-controller="Tests" asp-action="Index" asp-route-lectureId="@lecture.Id"
+                                       class="btn btn-sm @(lecture.TestIsPublished ? "btn-success" : "btn-outline-primary")">Тест@(lecture.HasTest ? " (" + lecture.TestQuestionsCount + ")" : "")</a>
                                     <a asp-controller="Lectures" asp-action="Edit" asp-route-id="@lecture.Id"
                                        class="btn btn-sm btn-outline-secondary">Изменить</a>
                                     <form asp-controller="Lectures" asp-action="Delete" asp-route-id="@lecture.Id"

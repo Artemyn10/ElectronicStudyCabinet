@@ -82,7 +82,10 @@ public class DisciplineService : IDisciplineService
                                 MaterialFileName = l.MaterialFileName,
                                 PassingPercentage = l.PassingPercentage,
                                 MaxAttempts = l.MaxAttempts,
-                                ControlQuestionsCount = l.ControlQuestions.Count
+                                ControlQuestionsCount = l.ControlQuestions.Count,
+                                HasTest = l.Test != null,
+                                TestIsPublished = l.Test != null && l.Test.IsPublished,
+                                TestQuestionsCount = l.Test != null ? l.Test.Questions.Count : 0
                             })
                             .ToList()
                     })

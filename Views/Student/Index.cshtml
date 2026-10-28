@@ -1,7 +1,72 @@
-﻿@{
+﻿@model List<AvailableTestViewModel>
+@{
     ViewData["Title"] = "Личный кабинет студента";
 }
 
-<h1 class="h3">Личный кабинет студента</h1>
-<p>Здравствуйте, @User.Identity?.Name!</p>
-<p class="text-muted">Эта страница-заглушка. Настоящий кабинет появится на этапе 13.</p>
+<h1 class="h3 mb-1">Личный кабинет студента</h1>
+<p class="text-muted">Здравствуйте, @User.Identity?.Name!</p>
+
+<div class="alert alert-secondary">
+    Временная страница: настоящий кабинет с дисциплинами, лекциями и прогрессом появится на этапе 13.
+    Пока здесь список доступных тестов.
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Опубликованных тестов пока нет.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Лекция</th>
+                    <th>Дисциплина / тема</th>
+                    <th>Вопросов</th>
+                    <th>Проходной</th>
+                    <th>Попытки</th>
+                    <th>Статус</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.LectureTitle</td>
+                        <td>
+                            @item.DisciplineName
+                            <div class="text-muted small">@item.TopicName</div>
+                        </td>
+                        <td>@item.QuestionsCount</td>
+                        <td>@item.PassingPercentage%</td>
+                        <td>@item.AttemptsUsed из @item.MaxAttempts</td>
+                        <td>
+                            @if (item.IsPassed)
+                            {
+                                <span class="badge status-completed">Пройден</span>
+                            }
+                            else if (item.AttemptsUsed >= item.MaxAttempts)
+                            {
+                                <span class="badge bg-danger">Попытки исчерпаны</span>
+                            }
+                            else if (item.AttemptsUsed > 0)
+                            {
+                                <span class="badge status-progress">В процессе</span>
+                            }
+                            else
+                            {
+                                <span class="badge status-available">Доступен</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-controller="StudentTests" asp-action="Index" asp-route-lectureId="@item.LectureId"
+                               class="btn btn-sm btn-outline-primary">Открыть</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
