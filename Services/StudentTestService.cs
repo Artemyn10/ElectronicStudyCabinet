@@ -2,6 +2,7 @@
 using ElectronicStudyCabinet.Models;
 using ElectronicStudyCabinet.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace ElectronicStudyCabinet.Services;
 
@@ -22,7 +23,6 @@ public record TestResponse<T>(TestOutcome Outcome, T? Value = default);
 
 public interface IStudentTestService
 {
-    Task<List<AvailableTestViewModel>> GetAvailableTestsAsync(string studentId);
     Task<TestResponse<StudentTestOverviewViewModel>> GetOverviewAsync(string studentId, int lectureId);
     Task<TestResponse<int>> StartAsync(string studentId, int lectureId);
     Task<TestResponse<StudentTestTakeViewModel>> GetTakeAsync(string studentId, int attemptId);
@@ -34,11 +34,13 @@ public class StudentTestService : IStudentTestService
 {
     private readonly ApplicationDbContext _db;
     private readonly ILectureAccessService _access;
+    private readonly ILectureProgressService _progress;
 
-    public StudentTestService(ApplicationDbContext db, ILectureAccessService access)
+    public StudentTestService(ApplicationDbContext db, ILectureAccessService access, ILectureProgressService progress)
     {
         _db = db;
         _access = access;
+        _progress = progress;
     }
 
     private record TestContext(
@@ -50,33 +52,7 @@ public class StudentTestService : IStudentTestService
         int PassingPercentage,
         int MaxAttempts);
 
-    // ===== Временный список тестов для страницы студента (на этапе 13 заменим кабинетом) =====
-
-    public async Task<List<AvailableTestViewModel>> GetAvailableTestsAsync(string studentId)
-    {
-        return await _db.Tests
-            .AsNoTracking()
-            .Where(t => t.IsPublished
-                        && t.Lecture.IsPublished
-                        && t.Lecture.Topic.Discipline.IsPublished
-                        && t.Questions.Any())
-            .OrderBy(t => t.Lecture.Topic.Discipline.Name)
-            .ThenBy(t => t.Lecture.Topic.OrderIndex)
-            .ThenBy(t => t.Lecture.OrderIndex)
-            .Select(t => new AvailableTestViewModel
-            {
-                LectureId = t.LectureId,
-                LectureTitle = t.Lecture.Title,
-                TopicName = t.Lecture.Topic.Name,
-                DisciplineName = t.Lecture.Topic.Discipline.Name,
-                QuestionsCount = t.Questions.Count,
-                PassingPercentage = t.Lecture.PassingPercentage,
-                MaxAttempts = t.Lecture.MaxAttempts,
-                AttemptsUsed = t.Attempts.Count(a => a.StudentId == studentId),
-                IsPassed = t.Attempts.Any(a => a.StudentId == studentId && a.IsPassed)
-            })
-            .ToListAsync();
-    }
+    
 
     // ===== Обзор теста =====
 
@@ -323,6 +299,8 @@ public class StudentTestService : IStudentTestService
         attempt.CompletedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
+        // Пройденный тест мог завершить лекцию и открыть следующую
+        await _progress.SyncAsync(studentId, attempt.Test.LectureId);
 
         return new(TestOutcome.Ok, attempt.Id);
     }

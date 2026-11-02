@@ -3,6 +3,7 @@ using ElectronicStudyCabinet.Services;
 using ElectronicStudyCabinet.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ElectronicStudyCabinet.Controllers;
 
@@ -10,11 +11,14 @@ namespace ElectronicStudyCabinet.Controllers;
 public class TestsController : Controller
 {
     private readonly ITestService _tests;
+    private readonly IAuditService _audit;
 
-    public TestsController(ITestService tests)
+    public TestsController(ITestService tests, IAuditService audit)
     {
         _tests = tests;
+        _audit = audit;
     }
+    private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     // /Tests?lectureId=5
     public async Task<IActionResult> Index(int lectureId)
@@ -44,9 +48,17 @@ public class TestsController : Controller
         var (success, error) = await _tests.SetPublishedAsync(lectureId, publish);
 
         if (success)
+        {
             TempData["Success"] = publish ? "Тест опубликован" : "Тест снят с публикации";
+            await _audit.LogAsync(
+                UserId,
+                publish ? AuditActions.TestPublished : AuditActions.TestUnpublished,
+                $"{(publish ? "Опубликован" : "Снят с публикации")} тест лекции №{lectureId} (Id лекции)");
+        }
         else
+        {
             TempData["Error"] = error;
+        }
 
         return RedirectToAction(nameof(Index), new { lectureId });
     }
@@ -61,6 +73,8 @@ public class TestsController : Controller
         {
             case DeleteResult.Deleted:
                 TempData["Success"] = "Тест удалён";
+                await _audit.LogAsync(UserId, AuditActions.DeleteTest,
+                    $"Удалён тест лекции №{lectureId} (Id лекции)");
                 break;
             case DeleteResult.HasChildren:
                 TempData["Error"] = "Нельзя удалить тест, который студенты уже проходили.";
@@ -162,5 +176,12 @@ public class TestsController : Controller
     {
         foreach (var error in _tests.ValidateQuestion(model))
             ModelState.AddModelError(error.Key, error.Value);
+    }
+    // Раздел "Тесты": все лекции и состояние их тестов
+    public async Task<IActionResult> Overview(string? search)
+    {
+        ViewData["Search"] = search;
+        var items = await _tests.GetOverviewAsync(search);
+        return View(items);
     }
 }

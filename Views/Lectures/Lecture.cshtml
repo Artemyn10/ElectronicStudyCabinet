@@ -1,0 +1,213 @@
+﻿@model StudentLecturePageViewModel
+@{
+    var state = Model.State;
+    ViewData["Title"] = state.Title;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="Student" asp-action="Index">Мой кабинет</a></li>
+        <li class="breadcrumb-item">
+            <a asp-action="Discipline" asp-route-id="@Model.DisciplineId">@Model.DisciplineName</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Лекция №@state.Number</li>
+    </ol>
+</nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
+    <h1 class="h3 mb-0">Лекция №@state.Number. @state.Title</h1>
+    <partial name="_LectureStatusBadge" model="state.Status" />
+</div>
+<div class="text-muted mb-3">Тема: @state.TopicName</div>
+
+@if (!string.IsNullOrWhiteSpace(state.Description))
+{
+    <p>@state.Description</p>
+}
+
+<!-- Учебный материал -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="h5">Учебный материал</h2>
+
+        @if (state.HasMaterial)
+        {
+            <p class="mb-2">@state.MaterialFileName</p>
+            <a asp-controller="Materials" asp-action="Download" asp-route-id="@state.LectureId"
+               target="_blank" class="btn btn-primary btn-sm">Открыть</a>
+            <a asp-controller="Materials" asp-action="Download" asp-route-id="@state.LectureId" asp-route-download="true"
+               class="btn btn-outline-secondary btn-sm">Скачать</a>
+        }
+        else
+        {
+            <p class="text-muted mb-0">Преподаватель пока не загрузил материал для этой лекции.</p>
+        }
+    </div>
+</div>
+
+<!-- Контрольные вопросы -->
+@if (Model.Questions.Any())
+{
+    <h2 class="h5 mt-4">Контрольные вопросы</h2>
+
+    @if (Model.RequireControlQuestions)
+    {
+        <p class="text-muted small">
+            Обязательные вопросы нужно выполнить, чтобы открылась следующая лекция.
+        </p>
+    }
+
+    @foreach (var question in Model.Questions)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                    <div class="fw-semibold">@question.Number. @question.Text</div>
+                    <div>
+                        @if (question.IsRequired)
+                        {
+                            <span class="badge bg-warning text-dark">Обязательный</span>
+                        }
+                        @if (question.RequiresManualReview)
+                        {
+                            <span class="badge bg-secondary">Проверяет преподаватель</span>
+                        }
+                    </div>
+                </div>
+
+                @if (question.HasAnswer)
+                {
+                    <div class="mb-2">
+                        <span class="text-muted">Ваш ответ:</span> @question.AnswerText
+
+                        @if (question.ReviewStatus == ReviewStatus.PendingReview)
+                        {
+                            <span class="badge bg-warning text-dark ms-2">На проверке</span>
+                        }
+                        else if (question.ReviewStatus == ReviewStatus.Accepted)
+                        {
+                            <span class="badge bg-success ms-2">Принят</span>
+                        }
+                        else if (question.ReviewStatus == ReviewStatus.Rejected)
+                        {
+                            <span class="badge bg-danger ms-2">Отклонён преподавателем</span>
+                        }
+                        else if (question.IsCorrect)
+                        {
+                            <span class="badge bg-success ms-2">Верно</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger ms-2">Неверно</span>
+                        }
+                    </div>
+                }
+
+                @if (question.CanAnswer)
+                {
+                    <form asp-action="Answer" method="post">
+                        <input type="hidden" name="LectureId" value="@state.LectureId" />
+                        <input type="hidden" name="QuestionId" value="@question.Id" />
+
+                        @if (question.QuestionType == QuestionType.SingleChoice)
+                        {
+                            @foreach (var option in question.Options)
+                            {
+                                <div class="form-check mb-1">
+                                    <input class="form-check-input" type="radio" name="SelectedOptionId"
+                                           id="q@(question.Id)_o@(option.Id)" value="@option.Id" required />
+                                    <label class="form-check-label" for="q@(question.Id)_o@(option.Id)">@option.Text</label>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <input type="text" name="AnswerText" class="form-control mb-2"
+                                   maxlength="2000" placeholder="Введите ответ" required />
+                        }
+
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Ответить</button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
+}
+
+<!-- Тест -->
+<div class="card shadow-sm mb-3 mt-4">
+    <div class="card-body">
+        <h2 class="h5">Тест</h2>
+
+        @if (!state.TestRequired)
+        {
+            <p class="text-muted mb-0">К этой лекции тест не предусмотрен.</p>
+        }
+        else
+        {
+            <p class="mb-2">
+                Проходной балл: <strong>@state.PassingPercentage%</strong> ·
+                Использовано попыток: <strong>@Model.TestAttemptsUsed из @state.MaxAttempts</strong>
+                @if (state.TestPassed)
+                {
+                    <span class="badge bg-success ms-2">Пройден</span>
+                }
+            </p>
+            <a asp-controller="StudentTests" asp-action="Index" asp-route-lectureId="@state.LectureId"
+               class="btn btn-primary btn-sm">@(state.TestPassed ? "Результаты теста" : "Перейти к тесту")</a>
+        }
+    </div>
+</div>
+
+<!-- Что нужно для следующей лекции -->
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <h2 class="h5">Условия для открытия следующей лекции</h2>
+
+        <ul class="list-unstyled mb-3">
+            @if (state.TestRequired)
+            {
+                <li>
+                    @(state.TestPassed ? "✔" : "○") Тест пройден на @state.PassingPercentage% и выше
+                </li>
+            }
+
+            @if (state.RequiredQuestions > 0)
+            {
+                <li>
+                    @(state.RequiredQuestionsDone == state.RequiredQuestions ? "✔" : "○")
+                    Обязательные контрольные вопросы: @state.RequiredQuestionsDone из @state.RequiredQuestions
+                    @if (state.PendingReviewCount > 0)
+                    {
+                        <span class="text-muted">(ожидают проверки преподавателем: @state.PendingReviewCount)</span>
+                    }
+                </li>
+            }
+
+            @if (!state.TestRequired && state.RequiredQuestions == 0)
+            {
+                <li>✔ Дополнительных условий нет: достаточно изучить материал.</li>
+            }
+        </ul>
+
+        @if (Model.Next == null)
+        {
+            <p class="mb-0 text-muted">Это последняя лекция дисциплины.</p>
+        }
+        else
+        {
+            <p class="mb-0">
+                Следующая лекция: №@Model.Next.Number «@Model.Next.Title»
+                <partial name="_LectureStatusBadge" model="Model.Next.Status" />
+
+                @if (!Model.Next.IsLocked)
+                {
+                    <a asp-action="Lecture" asp-route-id="@Model.Next.LectureId"
+                       class="btn btn-sm btn-success ms-2">Перейти</a>
+                }
+            </p>
+        }
+    </div>
+</div>
+
+<a asp-action="Discipline" asp-route-id="@Model.DisciplineId" class="btn btn-outline-secondary">К списку лекций</a>

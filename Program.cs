@@ -1,7 +1,10 @@
+using System.Threading.RateLimiting;
 using ElectronicStudyCabinet.Data;
 using ElectronicStudyCabinet.Models;
 using ElectronicStudyCabinet.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +13,18 @@ builder.Services.AddControllersWithViews(options =>
 {
     // Ќе считать все не-nullable строки об€зательными (мы задаЄм [Required] сами)
     options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+
+    // «ащита от подделки запросов: токен провер€етс€ дл€ всех POST-запросов автоматически
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+});
+
+// «апрет по умолчанию: люба€ страница требует входа,
+// кроме тех, где €вно указано [AllowAnonymous]
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
 });
 
 // ѕодключение к PostgreSQL через Entity Framework Core
@@ -44,8 +59,28 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
     options.SlidingExpiration = true;
+
+    options.Cookie.Name = "StudyCabinet.Auth";
+    options.Cookie.HttpOnly = true;                              // недоступна скриптам на странице
+    options.Cookie.SameSite = SameSiteMode.Lax;                  // не отправл€етс€ с чужих сайтов при POST
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // при HTTPS cookie помечаетс€ как защищЄнна€
 });
 
+// ќграничение частоты запросов: не более 10 в минуту с одного адреса
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
 
 // —ервисы бизнес-логики
 builder.Services.AddScoped<IDisciplineService, DisciplineService>();
@@ -56,10 +91,19 @@ builder.Services.AddScoped<IControlQuestionService, ControlQuestionService>();
 builder.Services.AddScoped<ITestService, TestService>();
 builder.Services.AddScoped<ILectureAccessService, LectureAccessService>();
 builder.Services.AddScoped<IStudentTestService, StudentTestService>();
+builder.Services.AddScoped<ILectureProgressService, LectureProgressService>();
+builder.Services.AddScoped<IControlAnswerService, ControlAnswerService>();
+builder.Services.AddScoped<IStudentLectureService, StudentLectureService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<ITeacherDashboardService, TeacherDashboardService>();
+builder.Services.AddScoped<IStudentCabinetService, StudentCabinetService>();
+builder.Services.AddScoped<ITeacherReportService, TeacherReportService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IManualUnlockService, ManualUnlockService>();
 
 var app = builder.Build();
 
-// јвтоматическое создание базы, миграции, роли и первый преподаватель
+// јвтоматическое создание базы, миграции, роли, пользователи и демонстрационные данные
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
@@ -80,19 +124,50 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+var redirectToHttps = app.Configuration.GetValue<bool>("Security:RedirectToHttps", true);
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+
+    if (redirectToHttps)
+        app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// —траницы дл€ ошибок 400, 404, 429 и других
+app.UseStatusCodePagesWithReExecute("/Home/HttpStatus", "?code={0}");
+
+// «аголовки безопасности
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+
+    // ƒл€ выдаваемых файлов (PDF) политику содержимого не добавл€ем,
+    // чтобы встроенный просмотрщик PDF в браузере работал
+    if (!context.Request.Path.StartsWithSegments("/Materials"))
+    {
+        headers["Content-Security-Policy"] =
+            "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+    }
+
+    await next();
+});
+
+if (redirectToHttps)
+    app.UseHttpsRedirection();
+
 app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication();   // кто вы? (читает cookie)
-app.UseAuthorization();    // что вам можно?
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

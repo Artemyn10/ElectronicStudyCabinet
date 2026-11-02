@@ -1,0 +1,23 @@
+﻿@model LectureStatus
+
+@switch (Model)
+{
+    case LectureStatus.Completed:
+        <span class="badge status-completed">Завершена</span>
+        break;
+    case LectureStatus.PendingReview:
+        <span class="badge status-pending">Ожидает проверки</span>
+        break;
+    case LectureStatus.InProgress:
+        <span class="badge status-progress">В процессе</span>
+        break;
+    case LectureStatus.Available:
+        <span class="badge status-available">Доступна</span>
+        break;
+    case LectureStatus.NotStudied:
+        <span class="badge status-notstudied">Не изучена</span>
+        break;
+    default:
+        <span class="badge status-locked">Заблокирована</span>
+        break;
+}

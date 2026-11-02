@@ -1,0 +1,74 @@
+﻿@model List<TestOverviewRowViewModel>
+@{
+    ViewData["Title"] = "Тесты";
+    var search = ViewData["Search"] as string;
+}
+
+<h1 class="h3 mb-3">Тесты</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-6">
+        <input type="text" name="search" value="@search" class="form-control" placeholder="Поиск по названию лекции" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        @if (!string.IsNullOrWhiteSpace(search))
+        {
+            <a asp-action="Overview" class="btn btn-outline-secondary">Сбросить</a>
+        }
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Лекций не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Лекция</th>
+                    <th>Дисциплина / тема</th>
+                    <th>Тест</th>
+                    <th class="text-center">Вопросов</th>
+                    <th class="text-center">Попыток студентов</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.LectureTitle</td>
+                        <td>
+                            @item.DisciplineName
+                            <div class="text-muted small">@item.TopicName</div>
+                        </td>
+                        <td>
+                            @if (!item.HasTest)
+                            {
+                                <span class="badge bg-light text-dark border">нет теста</span>
+                            }
+                            else if (item.IsPublished)
+                            {
+                                <span class="badge bg-success">Опубликован</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Черновик</span>
+                            }
+                        </td>
+                        <td class="text-center">@item.QuestionsCount</td>
+                        <td class="text-center">@item.AttemptsCount</td>
+                        <td class="text-end">
+                            <a asp-action="Index" asp-route-lectureId="@item.LectureId"
+                               class="btn btn-sm btn-outline-primary">@(item.HasTest ? "Открыть" : "Создать")</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

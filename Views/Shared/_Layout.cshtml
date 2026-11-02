@@ -37,12 +37,6 @@
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Teacher" asp-action="Index">Панель преподавателя</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Disciplines" asp-action="Index">Дисциплины</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Lectures" asp-action="Index">Лекции</a>
-                            </li>
                         }
                     </ul>
 
@@ -51,6 +45,9 @@
                         {
                             <li class="nav-item">
                                 <span class="navbar-text me-lg-3">@User.Identity.Name</span>
+                            </li>
+                            <li class="nav-item me-lg-2">
+                                <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="ChangePassword">Сменить пароль</a>
                             </li>
                             <li class="nav-item">
                                 <form asp-controller="Account" asp-action="Logout" method="post">

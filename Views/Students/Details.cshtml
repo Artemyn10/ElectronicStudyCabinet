@@ -1,0 +1,228 @@
+﻿@model StudentDetailsViewModel
+@{
+    ViewData["Title"] = Model.FullName;
+    var cabinet = Model.Cabinet;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Студенты</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+    </ol>
+</nav>
+
+<h1 class="h3 mb-0">@Model.FullName</h1>
+<div class="text-muted mb-3">@Model.UserName · @Model.Email</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Дисциплин</div>
+                <div class="fs-3 fw-semibold">@cabinet.DisciplinesCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Всего лекций</div>
+                <div class="fs-3 fw-semibold">@cabinet.TotalLectures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Завершено</div>
+                <div class="fs-3 fw-semibold text-success">@cabinet.CompletedLectures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Общий прогресс</div>
+                <div class="fs-3 fw-semibold">@cabinet.ProgressPercent%</div>
+                <div class="progress mt-1" style="height: 0.5rem;">
+                    <div class="progress-bar bg-success" style="width: @(cabinet.ProgressPercent)%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.LockedLectures.Any())
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5">Открыть лекцию вручную</h2>
+            <p class="text-muted small">
+                Лекция станет доступна студенту независимо от результатов предыдущих.
+                Следующая за ней лекция откроется только после завершения этой.
+                Действие сохраняется в журнале.
+            </p>
+
+            <form asp-action="Unlock" method="post" class="row g-2"
+                  data-confirm="Открыть выбранную лекцию студенту «@Model.FullName»?">
+                <input type="hidden" name="studentId" value="@Model.Id" />
+
+                <div class="col-12 col-lg-5">
+                    <select name="lectureId" class="form-select" required>
+                        <option value="">Выберите лекцию...</option>
+                        @foreach (var group in Model.LockedLectures.GroupBy(l => l.DisciplineName))
+                        {
+                            <optgroup label="@group.Key">
+                                @foreach (var lecture in group)
+                                {
+                                    <option value="@lecture.LectureId">№@lecture.Number. @lecture.Title</option>
+                                }
+                            </optgroup>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-12 col-lg-5">
+                    <input type="text" name="reason" maxlength="300" class="form-control"
+                           placeholder="Причина (необязательно)" />
+                </div>
+
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-primary">Открыть лекцию</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<h2 class="h4 mb-3">Дисциплины и лекции</h2>
+
+@{
+    var isFirst = true;
+}
+@foreach (var discipline in cabinet.Disciplines)
+{
+    <details class="card shadow-sm mb-3" open="@isFirst">
+        <summary class="card-header bg-white" style="cursor: pointer;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="fw-semibold">@discipline.Name</span>
+                <span class="small text-muted">
+                    Завершено: @discipline.CompletedLectures из @discipline.TotalLectures · @discipline.ProgressPercent%
+                </span>
+            </div>
+            <div class="progress mt-2" style="height: 0.5rem;">
+                <div class="progress-bar bg-success" style="width: @(discipline.ProgressPercent)%"></div>
+            </div>
+        </summary>
+
+        <div class="card-body">
+            @if (!discipline.Topics.Any())
+            {
+                <div class="text-muted">Нет опубликованных лекций.</div>
+            }
+
+            @foreach (var topic in discipline.Topics)
+            {
+                <h3 class="h6 mt-2">@topic.Name</h3>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 3.5rem;">№</th>
+                                <th>Лекция</th>
+                                <th>Статус</th>
+                                <th>Тест</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in topic.Lectures)
+                            {
+                                var lecture = row.State;
+                                <tr>
+                                    <td>@lecture.Number</td>
+                                    <td>@lecture.Title</td>
+                                    <td>
+                                        <partial name="_LectureStatusBadge" model="lecture.Status" />
+
+                                        @if (lecture.IsManuallyUnlocked)
+                                        {
+                                            <span class="badge bg-info text-dark">открыта вручную</span>
+
+                                            @if (lecture.Status == LectureStatus.Available)
+                                            {
+                                                <form asp-action="RevokeUnlock" method="post" class="d-inline"
+                                                      data-confirm="Отменить ручное открытие этой лекции?">
+                                                    <input type="hidden" name="studentId" value="@Model.Id" />
+                                                    <input type="hidden" name="lectureId" value="@lecture.LectureId" />
+                                                    <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-1">отменить</button>
+                                                </form>
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </details>
+
+    isFirst = false;
+}
+
+<h2 class="h4 mt-4 mb-3">Результаты тестирования</h2>
+
+@if (!cabinet.Results.Any())
+{
+    <div class="alert alert-info">Студент ещё не проходил тесты.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Лекция</th>
+                    <th>Дисциплина</th>
+                    <th>Лучший результат</th>
+                    <th>Проходной</th>
+                    <th>Попытки</th>
+                    <th>Последняя попытка</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var result in cabinet.Results)
+                {
+                    <tr>
+                        <td class="fw-semibold">@result.LectureTitle</td>
+                        <td>@result.DisciplineName</td>
+                        <td>@(result.BestScore != null ? result.BestScore.Value.ToString("0.#") + "%" : "—")</td>
+                        <td>@result.PassingPercentage%</td>
+                        <td>@result.AttemptsUsed из @result.MaxAttempts</td>
+                        <td>
+                            @(result.LastAttemptAt != null
+                                                ? result.LastAttemptAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                : "в процессе")
+                </td>
+                <td>
+                    @if (result.IsPassed)
+                            {
+                                <span class="badge bg-success">Пройден</span>
+                            }
+                            else if (result.AttemptsExhausted)
+                            {
+                                <span class="badge bg-danger">Попытки исчерпаны</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Не пройден</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

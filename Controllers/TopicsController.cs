@@ -15,6 +15,13 @@ public class TopicsController : Controller
     {
         _topics = topics;
     }
+    // Раздел "Темы": все темы всех дисциплин
+    public async Task<IActionResult> Index(string? search)
+    {
+        ViewData["Search"] = search;
+        var items = await _topics.GetOverviewAsync(search);
+        return View(items);
+    }
 
     // /Topics/Create?disciplineId=5
     [HttpGet]

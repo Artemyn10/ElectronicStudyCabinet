@@ -1,0 +1,81 @@
+﻿@model List<ControlQuestionOverviewRowViewModel>
+@{
+    ViewData["Title"] = "Контрольные вопросы";
+    var search = ViewData["Search"] as string;
+}
+
+<h1 class="h3 mb-3">Контрольные вопросы</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-6">
+        <input type="text" name="search" value="@search" class="form-control" placeholder="Поиск по названию лекции" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        @if (!string.IsNullOrWhiteSpace(search))
+        {
+            <a asp-action="Overview" class="btn btn-outline-secondary">Сбросить</a>
+        }
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Лекций не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Лекция</th>
+                    <th>Дисциплина / тема</th>
+                    <th class="text-center">Вопросов</th>
+                    <th>Условия</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@item.LectureTitle</td>
+                        <td>
+                            @item.DisciplineName
+                            <div class="text-muted small">@item.TopicName</div>
+                        </td>
+                        <td class="text-center">@item.QuestionsCount</td>
+                        <td>
+                            @if (item.QuestionsCount == 0)
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                @if (item.RequireControlQuestions)
+                                {
+                                    <span class="badge bg-warning text-dark">Влияют на открытие следующей</span>
+                                }
+                                @if (item.RequiredCount > 0)
+                                {
+                                    <span class="badge bg-light text-dark border">обязательных: @item.RequiredCount</span>
+                                }
+                                @if (item.ManualReviewCount > 0)
+                                {
+                                    <span class="badge bg-secondary">ручная проверка: @item.ManualReviewCount</span>
+                                }
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Index" asp-route-lectureId="@item.LectureId"
+                               class="btn btn-sm btn-outline-primary">Вопросы</a>
+                            <a asp-action="Create" asp-route-lectureId="@item.LectureId"
+                               class="btn btn-sm btn-outline-secondary">Добавить</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

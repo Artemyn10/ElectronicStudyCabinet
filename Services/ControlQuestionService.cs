@@ -15,6 +15,7 @@ public interface IControlQuestionService
     Task<bool> CreateAsync(ControlQuestionFormViewModel model);
     Task<int?> UpdateAsync(ControlQuestionFormViewModel model);
     Task<DeleteResult> DeleteAsync(int id);
+    Task<List<ControlQuestionOverviewRowViewModel>> GetOverviewAsync(string? search);
 }
 
 public class ControlQuestionService : IControlQuestionService
@@ -338,4 +339,32 @@ public class ControlQuestionService : IControlQuestionService
     }
 
     private record LectureInfo(string Title, int DisciplineId, string DisciplineName);
+    // Все лекции с числом контрольных вопросов (для раздела "Контрольные вопросы")
+    public async Task<List<ControlQuestionOverviewRowViewModel>> GetOverviewAsync(string? search)
+    {
+        var query = _db.Lectures.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(l => EF.Functions.ILike(l.Title, pattern));
+        }
+
+        return await query
+            .OrderBy(l => l.Topic.Discipline.Name)
+            .ThenBy(l => l.Topic.OrderIndex).ThenBy(l => l.OrderIndex).ThenBy(l => l.Id)
+            .Select(l => new ControlQuestionOverviewRowViewModel
+            {
+                LectureId = l.Id,
+                LectureTitle = l.Title,
+                TopicName = l.Topic.Name,
+                DisciplineId = l.Topic.DisciplineId,
+                DisciplineName = l.Topic.Discipline.Name,
+                QuestionsCount = l.ControlQuestions.Count,
+                RequiredCount = l.ControlQuestions.Count(q => q.IsRequired),
+                ManualReviewCount = l.ControlQuestions.Count(q => q.RequiresManualReview),
+                RequireControlQuestions = l.RequireControlQuestions
+            })
+            .ToListAsync();
+    }
 }

@@ -1,0 +1,88 @@
+﻿@model StudentsListViewModel
+@{
+    ViewData["Title"] = "Студенты";
+}
+
+<h1 class="h3 mb-3">Студенты</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-5">
+        <input type="text" name="search" value="@Model.Search" class="form-control"
+               placeholder="Поиск по ФИО, логину или почте" />
+    </div>
+    <div class="col-12 col-md-3">
+        <select name="status" class="form-select">
+            <option value="" selected="@string.IsNullOrEmpty(Model.Status)">Все студенты</option>
+            <option value="notstarted" selected="@(Model.Status == "notstarted")">Не начали обучение</option>
+            <option value="inprogress" selected="@(Model.Status == "inprogress")">В процессе обучения</option>
+            <option value="finished" selected="@(Model.Status == "finished")">Завершили всё</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+</form>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Студентов не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Студент</th>
+                    <th>Дисциплин начато</th>
+                    <th style="min-width: 11rem;">Прогресс</th>
+                    <th>Тесты</th>
+                    <th>Последняя активность</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.FullName</a>
+                            <div class="text-muted small">@item.UserName · @item.Email</div>
+                        </td>
+                        <td>@item.StartedDisciplines</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 0.5rem;">
+                                    <div class="progress-bar bg-success" style="width: @(item.ProgressPercent)%"></div>
+                                </div>
+                                <span class="small">@item.ProgressPercent%</span>
+                            </div>
+                            <div class="text-muted small">@item.CompletedLectures из @item.TotalLectures лекций</div>
+                        </td>
+                        <td class="small">
+                            попыток: @item.AttemptsCount, пройдено: @item.PassedAttempts
+                            @if (item.AverageScore != null)
+                            {
+                                <div class="text-muted">средний результат @item.AverageScore.Value.ToString("0.#")%</div>
+                            }
+                        </td>
+                        <td class="small">
+                            @if (item.LastActivity != null)
+                            {
+                                @item.LastActivity.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">нет</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Открыть</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

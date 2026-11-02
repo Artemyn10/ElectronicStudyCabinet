@@ -1,3 +1,15 @@
 ﻿@{
-    Layout = "_Layout";
+    // Страницы этих контроллеров открываются в шаблоне панели преподавателя
+    var teacherControllers = new[]
+{
+        "Teacher", "Disciplines", "Topics", "Lectures",
+        "ControlQuestions", "Tests", "Reviews",
+        "Students", "Results", "Progress", "Reports", "Audit"
+    };
+
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+
+    Layout = User.IsInRole(AppRoles.Teacher) && teacherControllers.Contains(currentController)
+        ? "_TeacherLayout"
+        : "_Layout";
 }

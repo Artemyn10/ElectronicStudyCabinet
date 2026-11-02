@@ -1,68 +1,238 @@
-﻿@model List<AvailableTestViewModel>
+﻿@model StudentCabinetViewModel
 @{
     ViewData["Title"] = "Личный кабинет студента";
 }
 
 <h1 class="h3 mb-1">Личный кабинет студента</h1>
-<p class="text-muted">Здравствуйте, @User.Identity?.Name!</p>
+<p class="text-muted">Здравствуйте, <strong>@Model.FullName</strong>!</p>
 
-<div class="alert alert-secondary">
-    Временная страница: настоящий кабинет с дисциплинами, лекциями и прогрессом появится на этапе 13.
-    Пока здесь список доступных тестов.
+<!-- Общая сводка -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Дисциплин</div>
+                <div class="fs-3 fw-semibold">@Model.DisciplinesCount</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Всего лекций</div>
+                <div class="fs-3 fw-semibold">@Model.TotalLectures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Завершено</div>
+                <div class="fs-3 fw-semibold text-success">@Model.CompletedLectures</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Общий прогресс</div>
+                <div class="fs-3 fw-semibold">@Model.ProgressPercent%</div>
+                <div class="progress mt-1" style="height: 0.5rem;">
+                    <div class="progress-bar bg-success" style="width: @(Model.ProgressPercent)%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-@if (!Model.Any())
+<!-- Дисциплины -->
+<h2 class="h4 mb-3">Мои дисциплины</h2>
+
+@if (!Model.Disciplines.Any())
 {
-    <div class="alert alert-info">Опубликованных тестов пока нет.</div>
+    <div class="alert alert-info">Опубликованных дисциплин пока нет.</div>
+}
+
+@{
+    var isFirst = true;
+}
+@foreach (var discipline in Model.Disciplines)
+{
+    <details class="card shadow-sm mb-3" open="@isFirst">
+        <summary class="card-header bg-white" style="cursor: pointer;">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <span class="fw-semibold">@discipline.Name</span>
+                <span class="small text-muted">
+                    Завершено: @discipline.CompletedLectures из @discipline.TotalLectures · @discipline.ProgressPercent%
+                </span>
+            </div>
+            <div class="progress mt-2" style="height: 0.5rem;">
+                <div class="progress-bar bg-success" style="width: @(discipline.ProgressPercent)%"></div>
+            </div>
+        </summary>
+
+        <div class="card-body">
+            @if (!string.IsNullOrWhiteSpace(discipline.Description))
+            {
+                <p class="text-muted">@discipline.Description</p>
+            }
+
+            <p class="mb-3">
+                Дисциплина: «@discipline.Name».
+                Всего лекций: <strong>@discipline.TotalLectures</strong>.
+                Завершено: <strong>@discipline.CompletedLectures</strong>.
+                Прогресс: <strong>@discipline.ProgressPercent%</strong>.
+            </p>
+
+            <div class="mb-3 d-flex flex-wrap gap-2">
+                @if (discipline.ContinueLectureId != null)
+                {
+                    <a asp-controller="StudentLectures" asp-action="Lecture" asp-route-id="@discipline.ContinueLectureId"
+                       class="btn btn-primary">Продолжить: лекция №@discipline.ContinueLectureNumber</a>
+                }
+                <a asp-controller="StudentLectures" asp-action="Discipline" asp-route-id="@discipline.Id"
+                   class="btn btn-outline-secondary">Структура дисциплины</a>
+            </div>
+
+            @if (!discipline.Topics.Any())
+            {
+                <div class="text-muted">В этой дисциплине пока нет опубликованных лекций.</div>
+            }
+
+            @foreach (var topic in discipline.Topics)
+            {
+                <h3 class="h6 mt-3">@topic.Name</h3>
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 3.5rem;">№</th>
+                                <th>Лекция</th>
+                                <th>Статус</th>
+                                <th>Тест</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in topic.Lectures)
+                            {
+                                var lecture = row.State;
+
+                                <tr class="@(lecture.IsLocked ? "lecture-item-locked" : "")">
+                                    <td>@lecture.Number</td>
+                                    <td>
+                                        @if (lecture.IsLocked)
+                                        {
+                                            <span>@lecture.Title</span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="StudentLectures" asp-action="Lecture" asp-route-id="@lecture.LectureId"
+                                               class="text-decoration-none fw-semibold">@lecture.Title</a>
+                                        }
+                                    </td>
+                                    <td><partial name="_LectureStatusBadge" model="lecture.Status" /></td>
+                                    <td class="small">
+                                        @if (!lecture.TestRequired)
+                                        {
+                                            <span class="text-muted">теста нет</span>
+                                        }
+                                        else if (row.AttemptsUsed == 0)
+                                        {
+                                            <span class="text-muted">не проходился · попыток 0 из @lecture.MaxAttempts</span>
+                                        }
+                                        else
+                                        {
+                                            @if (row.BestScore != null)
+                                            {
+                                                <span>лучший результат <strong>@row.BestScore.Value.ToString("0.#")%</strong> · </span>
+                                            }
+                                            <span>попыток @row.AttemptsUsed из @lecture.MaxAttempts</span>
+                                            @if (row.LastAttemptAt != null)
+                                            {
+                                                <span class="text-muted"> · @row.LastAttemptAt.Value.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </details>
+
+    isFirst = false;
+}
+
+<!-- Результаты тестирования -->
+<h2 class="h4 mt-4 mb-3">Результаты тестирования</h2>
+
+@if (!Model.Results.Any())
+{
+    <div class="alert alert-info">Вы ещё не проходили тесты.</div>
 }
 else
 {
     <div class="table-responsive">
-        <table class="table table-hover align-middle bg-white shadow-sm">
+        <table class="table align-middle bg-white shadow-sm">
             <thead class="table-light">
                 <tr>
                     <th>Лекция</th>
-                    <th>Дисциплина / тема</th>
-                    <th>Вопросов</th>
+                    <th>Дисциплина</th>
+                    <th>Лучший результат</th>
                     <th>Проходной</th>
                     <th>Попытки</th>
+                    <th>Последняя попытка</th>
                     <th>Статус</th>
-                    <th class="text-end"></th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in Model)
+                @foreach (var result in Model.Results)
                 {
                     <tr>
-                        <td class="fw-semibold">@item.LectureTitle</td>
+                        <td class="fw-semibold">@result.LectureTitle</td>
+                        <td>@result.DisciplineName</td>
                         <td>
-                            @item.DisciplineName
-                            <div class="text-muted small">@item.TopicName</div>
-                        </td>
-                        <td>@item.QuestionsCount</td>
-                        <td>@item.PassingPercentage%</td>
-                        <td>@item.AttemptsUsed из @item.MaxAttempts</td>
-                        <td>
-                            @if (item.IsPassed)
+                            @if (result.BestScore != null)
                             {
-                                <span class="badge status-completed">Пройден</span>
-                            }
-                            else if (item.AttemptsUsed >= item.MaxAttempts)
-                            {
-                                <span class="badge bg-danger">Попытки исчерпаны</span>
-                            }
-                            else if (item.AttemptsUsed > 0)
-                            {
-                                <span class="badge status-progress">В процессе</span>
+                                @($"{result.BestScore.Value:0.#}%")
                             }
                             else
                             {
-                                <span class="badge status-available">Доступен</span>
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td>@result.PassingPercentage%</td>
+                        <td>@result.AttemptsUsed из @result.MaxAttempts</td>
+                        <td>
+                            @if (result.LastAttemptAt != null)
+                            {
+                                @result.LastAttemptAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                            }
+                            else
+                            {
+                                <span class="text-muted">в процессе</span>
+                            }
+                        </td>
+                        <td>
+                            @if (result.IsPassed)
+                            {
+                                <span class="badge bg-success">Пройден</span>
+                            }
+                            else if (result.AttemptsExhausted)
+                            {
+                                <span class="badge bg-danger">Попытки исчерпаны</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Не пройден</span>
                             }
                         </td>
                         <td class="text-end">
-                            <a asp-controller="StudentTests" asp-action="Index" asp-route-lectureId="@item.LectureId"
-                               class="btn btn-sm btn-outline-primary">Открыть</a>
+                            <a asp-controller="StudentTests" asp-action="Index" asp-route-lectureId="@result.LectureId"
+                               class="btn btn-sm btn-outline-secondary">Открыть</a>
                         </td>
                     </tr>
                 }

@@ -3,6 +3,7 @@ using ElectronicStudyCabinet.Services;
 using ElectronicStudyCabinet.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ElectronicStudyCabinet.Controllers;
 
@@ -10,11 +11,15 @@ namespace ElectronicStudyCabinet.Controllers;
 public class DisciplinesController : Controller
 {
     private readonly IDisciplineService _disciplines;
+    private readonly IAuditService _audit;
 
-    public DisciplinesController(IDisciplineService disciplines)
+    public DisciplinesController(IDisciplineService disciplines, IAuditService audit)
     {
         _disciplines = disciplines;
+        _audit = audit;
     }
+
+    private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     // Список с поиском: /Disciplines?search=...
     public async Task<IActionResult> Index(string? search)
@@ -82,12 +87,16 @@ public class DisciplinesController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
+        // Название запоминаем до удаления, чтобы записать его в журнал
+        var discipline = await _disciplines.GetFormAsync(id);
         var result = await _disciplines.DeleteAsync(id);
 
         switch (result)
         {
             case DeleteResult.Deleted:
                 TempData["Success"] = "Дисциплина удалена";
+                await _audit.LogAsync(UserId, AuditActions.DeleteDiscipline,
+                    $"Удалена дисциплина «{discipline?.Name}»");
                 break;
             case DeleteResult.HasChildren:
                 TempData["Error"] = "Нельзя удалить дисциплину, в которой есть темы. Сначала удалите темы.";

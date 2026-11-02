@@ -1,18 +1,5 @@
 ﻿namespace ElectronicStudyCabinet.ViewModels;
 
-// Строка во временном списке тестов на странице студента
-public class AvailableTestViewModel
-{
-    public int LectureId { get; set; }
-    public string LectureTitle { get; set; } = string.Empty;
-    public string TopicName { get; set; } = string.Empty;
-    public string DisciplineName { get; set; } = string.Empty;
-    public int QuestionsCount { get; set; }
-    public int PassingPercentage { get; set; }
-    public int MaxAttempts { get; set; }
-    public int AttemptsUsed { get; set; }
-    public bool IsPassed { get; set; }
-}
 
 // Строка в истории попыток
 public class AttemptHistoryRowViewModel

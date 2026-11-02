@@ -12,6 +12,8 @@
 
 <h1 class="h3 mb-0">Тест по лекции</h1>
 <div class="text-muted mb-3">@Model.LectureTitle · @Model.DisciplineName</div>
+<a asp-controller="StudentLectures" asp-action="Lecture" asp-route-id="@Model.LectureId"
+   class="btn btn-outline-secondary btn-sm mb-3">← К лекции</a>
 
 <div class="card shadow-sm mb-3">
     <div class="card-body">

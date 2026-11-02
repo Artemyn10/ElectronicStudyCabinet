@@ -1,0 +1,110 @@
+﻿@model ProgressPageViewModel
+@{
+    ViewData["Title"] = "Прогресс обучения";
+
+    string Symbol(LectureStatus status) => status switch
+    {
+        LectureStatus.Completed => "✔",
+        LectureStatus.PendingReview => "?",
+        LectureStatus.InProgress => "●",
+        LectureStatus.Locked => "–",
+        _ => "○"
+    };
+
+    string Css(LectureStatus status) => status switch
+    {
+        LectureStatus.Completed => "status-completed",
+        LectureStatus.PendingReview => "status-pending",
+        LectureStatus.InProgress => "status-progress",
+        LectureStatus.Locked => "status-locked",
+        LectureStatus.NotStudied => "status-notstudied",
+        _ => "status-available"
+    };
+
+    string Label(LectureStatus status) => status switch
+    {
+        LectureStatus.Completed => "Завершена",
+        LectureStatus.PendingReview => "Ожидает проверки",
+        LectureStatus.InProgress => "В процессе",
+        LectureStatus.Locked => "Заблокирована",
+        LectureStatus.NotStudied => "Не изучена",
+        _ => "Доступна"
+    };
+}
+
+<h1 class="h3 mb-3">Прогресс обучения</h1>
+
+@if (!Model.Disciplines.Any())
+{
+    <div class="alert alert-info">Нет опубликованных дисциплин.</div>
+}
+else
+{
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-12 col-md-5">
+            <select name="disciplineId" class="form-select" onchange="this.form.submit()">
+                @foreach (var discipline in Model.Disciplines)
+                {
+                    <option value="@discipline.Id" selected="@(Model.SelectedDisciplineId == discipline.Id)">@discipline.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto">
+            <noscript><button type="submit" class="btn btn-outline-primary">Показать</button></noscript>
+        </div>
+    </form>
+
+    <p class="small mb-3">
+        <span class="badge status-completed">✔</span> завершена
+        <span class="badge status-pending ms-2">?</span> ожидает проверки
+        <span class="badge status-progress ms-2">●</span> в процессе
+        <span class="badge status-available ms-2">○</span> доступна
+        <span class="badge status-locked ms-2">–</span> заблокирована
+    </p>
+
+    @if (!Model.Rows.Any())
+    {
+        <div class="alert alert-info">Студентов пока нет.</div>
+    }
+    else if (!Model.Lectures.Any())
+    {
+        <div class="alert alert-info">В этой дисциплине нет опубликованных лекций.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle bg-white shadow-sm text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-start">Студент</th>
+                        @foreach (var lecture in Model.Lectures)
+                        {
+                            <th title="@lecture.Title">@lecture.Number</th>
+                        }
+                        <th>Завершено</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Rows)
+                    {
+                        <tr>
+                            <td class="text-start">
+                                <a asp-controller="Students" asp-action="Details" asp-route-id="@row.StudentId"
+                                   class="text-decoration-none">@row.StudentName</a>
+                            </td>
+                            @for (var i = 0; i < row.Statuses.Count; i++)
+                            {
+                                var status = row.Statuses[i];
+                                <td class="p-1">
+                                    <span class="badge @Css(status)" style="min-width: 1.7rem;"
+                                          title="Лекция @(i + 1): @Label(status)">@Symbol(status)</span>
+                                </td>
+                            }
+                            <td class="text-nowrap">@row.Completed из @row.Total (@row.Percent%)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}

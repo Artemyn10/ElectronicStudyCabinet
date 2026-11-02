@@ -1,0 +1,109 @@
+﻿@model ResultsPageViewModel
+@{
+    ViewData["Title"] = "Результаты";
+}
+
+<h1 class="h3 mb-3">Результаты тестирования</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-4">
+        <select name="disciplineId" class="form-select">
+            <option value="" selected="@(Model.DisciplineId == null)">Все дисциплины</option>
+            @foreach (var discipline in Model.Disciplines)
+            {
+                <option value="@discipline.Id" selected="@(Model.DisciplineId == discipline.Id)">@discipline.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-12 col-md-3">
+        <input type="text" name="student" value="@Model.Student" class="form-control" placeholder="Студент (ФИО или логин)" />
+    </div>
+    <div class="col-12 col-md-2">
+        <select name="status" class="form-select">
+            <option value="" selected="@string.IsNullOrEmpty(Model.Status)">Все результаты</option>
+            <option value="passed" selected="@(Model.Status == "passed")">Пройден</option>
+            <option value="failed" selected="@(Model.Status == "failed")">Не пройден</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Показать</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+</form>
+
+<p class="text-muted">Найдено попыток: @Model.TotalCount</p>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Результатов не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Дата</th>
+                    <th>Студент</th>
+                    <th>Дисциплина / лекция</th>
+                    <th>Попытка</th>
+                    <th>Правильных</th>
+                    <th>Результат</th>
+                    <th>Проходной</th>
+                    <th>Итог</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="small text-nowrap">@item.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            <a asp-controller="Students" asp-action="Details" asp-route-id="@item.StudentId"
+                               class="text-decoration-none">@item.StudentName</a>
+                        </td>
+                        <td>
+                            @item.LectureTitle
+                            <div class="text-muted small">@item.DisciplineName</div>
+                        </td>
+                        <td>№@item.AttemptNumber</td>
+                        <td>@item.CorrectAnswers из @item.TotalQuestions</td>
+                        <td class="fw-semibold">@item.ScorePercentage.ToString("0.#")%</td>
+                        <td>@item.PassingPercentage%</td>
+                        <td>
+                            @if (item.IsPassed)
+                            {
+                                <span class="badge bg-success">Пройден</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Не пройден</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Страницы">
+            <ul class="pagination">
+                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)"
+                       asp-route-disciplineId="@Model.DisciplineId" asp-route-student="@Model.Student"
+                       asp-route-status="@Model.Status">Назад</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Страница @Model.Page из @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)"
+                       asp-route-disciplineId="@Model.DisciplineId" asp-route-student="@Model.Student"
+                       asp-route-status="@Model.Status">Вперёд</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

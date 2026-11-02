@@ -19,6 +19,7 @@ public interface ITestService
     Task<bool> CreateQuestionAsync(TestQuestionFormViewModel model);
     Task<int?> UpdateQuestionAsync(TestQuestionFormViewModel model);
     Task<(DeleteResult Result, int? LectureId)> DeleteQuestionAsync(int id);
+    Task<List<TestOverviewRowViewModel>> GetOverviewAsync(string? search);
 }
 
 public class TestService : ITestService
@@ -360,4 +361,32 @@ public class TestService : ITestService
     }
 
     private record LectureInfo(string Title, int DisciplineId, string DisciplineName);
+    // Все лекции со сведениями о тесте (для раздела "Тесты")
+    public async Task<List<TestOverviewRowViewModel>> GetOverviewAsync(string? search)
+    {
+        var query = _db.Lectures.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(l => EF.Functions.ILike(l.Title, pattern));
+        }
+
+        return await query
+            .OrderBy(l => l.Topic.Discipline.Name)
+            .ThenBy(l => l.Topic.OrderIndex).ThenBy(l => l.OrderIndex).ThenBy(l => l.Id)
+            .Select(l => new TestOverviewRowViewModel
+            {
+                LectureId = l.Id,
+                LectureTitle = l.Title,
+                TopicName = l.Topic.Name,
+                DisciplineId = l.Topic.DisciplineId,
+                DisciplineName = l.Topic.Discipline.Name,
+                HasTest = l.Test != null,
+                IsPublished = l.Test != null && l.Test.IsPublished,
+                QuestionsCount = l.Test != null ? l.Test.Questions.Count : 0,
+                AttemptsCount = l.Test != null ? l.Test.Attempts.Count : 0
+            })
+            .ToListAsync();
+    }
 }

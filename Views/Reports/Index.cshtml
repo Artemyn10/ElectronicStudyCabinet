@@ -1,0 +1,104 @@
+﻿@model ReportsViewModel
+@{
+    ViewData["Title"] = "Отчёты";
+}
+
+<h1 class="h3 mb-4">Отчёты</h1>
+
+<!-- По дисциплинам -->
+<h2 class="h5">Отчёт по дисциплинам</h2>
+
+@if (!Model.Disciplines.Any())
+{
+    <div class="alert alert-info">Нет опубликованных дисциплин с лекциями.</div>
+}
+else
+{
+    <div class="table-responsive mb-4">
+        <table class="table align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Дисциплина</th>
+                    <th class="text-center">Лекций</th>
+                    <th class="text-center">Студентов начали</th>
+                    <th class="text-center">Студентов закончили</th>
+                    <th class="text-center">Средний прогресс</th>
+                    <th class="text-center">Попыток тестов</th>
+                    <th class="text-center">Успешных</th>
+                    <th class="text-center">Средний результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Disciplines)
+                {
+                    <tr>
+                        <td class="fw-semibold">@row.Name</td>
+                        <td class="text-center">@row.LecturesCount</td>
+                        <td class="text-center">@row.StudentsStarted</td>
+                        <td class="text-center">@row.StudentsFinished</td>
+                        <td class="text-center">@row.AverageProgress%</td>
+                        <td class="text-center">@row.AttemptsCount</td>
+                        <td class="text-center">
+                            @if (row.AttemptsCount > 0)
+                            {
+                                <span>@row.PassedAttempts (@row.PassRate%)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                        </td>
+                        <td class="text-center">
+                            @(row.AverageScore != null ? row.AverageScore.Value.ToString("0.#") + "%" : "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+<!-- По студентам -->
+<h2 class="h5">Отчёт по студентам</h2>
+
+@if (!Model.Students.Any())
+{
+    <div class="alert alert-info">Студентов пока нет.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Студент</th>
+                    <th class="text-center">Дисциплин начато</th>
+                    <th class="text-center">Лекций завершено</th>
+                    <th class="text-center">Прогресс</th>
+                    <th class="text-center">Попыток тестов</th>
+                    <th class="text-center">Успешных</th>
+                    <th class="text-center">Средний результат</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Students)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Students" asp-action="Details" asp-route-id="@row.Id"
+                               class="fw-semibold text-decoration-none">@row.FullName</a>
+                        </td>
+                        <td class="text-center">@row.StartedDisciplines</td>
+                        <td class="text-center">@row.CompletedLectures из @row.TotalLectures</td>
+                        <td class="text-center">@row.ProgressPercent%</td>
+                        <td class="text-center">@row.AttemptsCount</td>
+                        <td class="text-center">@row.PassedAttempts</td>
+                        <td class="text-center">
+                            @(row.AverageScore != null ? row.AverageScore.Value.ToString("0.#") + "%" : "—")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

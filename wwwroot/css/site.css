@@ -63,3 +63,12 @@ body {
 .lecture-item-locked {
     opacity: 0.65;
 }
+/* Боковое меню панели преподавателя */
+.sidebar {
+    min-height: calc(100vh - 56px);
+}
+
+    .sidebar .list-group-item.active {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }

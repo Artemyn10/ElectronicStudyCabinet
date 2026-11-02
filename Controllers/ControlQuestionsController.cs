@@ -114,4 +114,11 @@ public class ControlQuestionsController : Controller
         foreach (var error in await _questions.ValidateAsync(model))
             ModelState.AddModelError(error.Key, error.Value);
     }
+    // Раздел "Контрольные вопросы": все лекции с числом вопросов
+    public async Task<IActionResult> Overview(string? search)
+    {
+        ViewData["Search"] = search;
+        var items = await _questions.GetOverviewAsync(search);
+        return View(items);
+    }
 }

@@ -61,6 +61,8 @@ else
         }
 
         <a asp-controller="Student" asp-action="Index" class="btn btn-outline-secondary">В личный кабинет</a>
+        <a asp-controller="StudentLectures" asp-action="Lecture" asp-route-id="@Model.LectureId"
+           class="btn btn-outline-primary">К лекции</a>
     </div>
 </div>
 

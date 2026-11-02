@@ -1,0 +1,78 @@
+﻿@model AuditPageViewModel
+@{
+    ViewData["Title"] = "Журнал действий";
+}
+
+<h1 class="h3 mb-3">Журнал действий</h1>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-4">
+        <select name="type" class="form-select">
+            <option value="" selected="@string.IsNullOrEmpty(Model.Type)">Все действия</option>
+            @foreach (var option in Model.Types)
+            {
+                <option value="@option.Value" selected="@(Model.Type == option.Value)">@option.Label</option>
+            }
+        </select>
+    </div>
+    <div class="col-12 col-md-4">
+        <input type="text" name="search" value="@Model.Search" class="form-control"
+               placeholder="Поиск по описанию или преподавателю" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Показать</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+</form>
+
+<p class="text-muted">Записей: @Model.TotalCount</p>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Записей не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Дата и время</th>
+                    <th>Преподаватель</th>
+                    <th>Действие</th>
+                    <th>Описание</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="small text-nowrap">@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>@item.UserName</td>
+                        <td><span class="badge bg-secondary">@item.ActionLabel</span></td>
+                        <td>@item.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Страницы">
+            <ul class="pagination">
+                <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page - 1)"
+                       asp-route-type="@Model.Type" asp-route-search="@Model.Search">Назад</a>
+                </li>
+                <li class="page-item disabled">
+                    <span class="page-link">Страница @Model.Page из @Model.TotalPages</span>
+                </li>
+                <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@(Model.Page + 1)"
+                       asp-route-type="@Model.Type" asp-route-search="@Model.Search">Вперёд</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}

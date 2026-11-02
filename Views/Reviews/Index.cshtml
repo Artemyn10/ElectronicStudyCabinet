@@ -1,0 +1,57 @@
+﻿@model List<PendingReviewRowViewModel>
+@{
+    ViewData["Title"] = "Проверка ответов";
+}
+
+<h1 class="h3 mb-3">Проверка ответов</h1>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Ответов, ожидающих проверки, нет.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Студент</th>
+                    <th>Лекция</th>
+                    <th>Вопрос</th>
+                    <th>Ответ студента</th>
+                    <th>Образец</th>
+                    <th class="text-end">Решение</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @item.StudentName
+                            <div class="text-muted small">@item.SubmittedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+                        </td>
+                        <td>
+                            @item.LectureTitle
+                            <div class="text-muted small">@item.DisciplineName</div>
+                        </td>
+                        <td>@item.QuestionText</td>
+                        <td class="fw-semibold">@item.AnswerText</td>
+                        <td class="text-muted">@(string.IsNullOrWhiteSpace(item.ReferenceAnswer) ? "—" : item.ReferenceAnswer)</td>
+                        <td class="text-end text-nowrap">
+                            <form asp-action="Review" asp-route-id="@item.AnswerId" asp-route-accept="true"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">Принять</button>
+                            </form>
+                            <form asp-action="Review" asp-route-id="@item.AnswerId" asp-route-accept="false"
+                                  method="post" class="d-inline"
+                                  data-confirm="Отклонить этот ответ? Студент сможет отправить его заново.">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Отклонить</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

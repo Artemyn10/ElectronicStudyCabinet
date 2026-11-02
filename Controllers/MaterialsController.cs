@@ -1,4 +1,5 @@
-﻿using ElectronicStudyCabinet.Data;
+﻿using System.Security.Claims;
+using ElectronicStudyCabinet.Data;
 using ElectronicStudyCabinet.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,22 +7,43 @@ using Microsoft.AspNetCore.Mvc;
 namespace ElectronicStudyCabinet.Controllers;
 
 // Выдача файлов материалов. Файлы лежат вне wwwroot, прямой ссылки на них нет.
-// ВАЖНО: на этапе 12 здесь добавится проверка доступа студента к лекции.
-[Authorize(Roles = AppRoles.Teacher)]
+[Authorize]
 public class MaterialsController : Controller
 {
     private readonly ILectureService _lectures;
     private readonly IFileStorageService _storage;
+    private readonly ILectureAccessService _access;
 
-    public MaterialsController(ILectureService lectures, IFileStorageService storage)
+    public MaterialsController(
+        ILectureService lectures,
+        IFileStorageService storage,
+        ILectureAccessService access)
     {
         _lectures = lectures;
         _storage = storage;
+        _access = access;
     }
 
     // /Materials/Download/5 открывает PDF в браузере, /Materials/Download/5?download=true скачивает файл
     public async Task<IActionResult> Download(int id, bool download = false)
     {
+        if (User.IsInRole(AppRoles.Student))
+        {
+            // Студент получает файл, только если ему открыта эта лекция
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var access = await _access.CheckAsync(userId, id);
+
+            if (access.Status == LectureAccessStatus.NotFound)
+                return NotFound();
+
+            if (!access.IsAllowed)
+                return Forbid();
+        }
+        else if (!User.IsInRole(AppRoles.Teacher))
+        {
+            return Forbid();
+        }
+
         var info = await _lectures.GetMaterialAsync(id);
         if (info == null)
             return NotFound();

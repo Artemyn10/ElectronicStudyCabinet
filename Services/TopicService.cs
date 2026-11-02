@@ -13,6 +13,7 @@ public interface ITopicService
     Task<bool> CreateAsync(TopicFormViewModel model);
     Task<bool> UpdateAsync(TopicFormViewModel model);
     Task<DeleteResult> DeleteAsync(int id);
+    Task<List<TopicOverviewRowViewModel>> GetOverviewAsync(string? search);
 }
 
 public class TopicService : ITopicService
@@ -114,5 +115,29 @@ public class TopicService : ITopicService
         _db.Topics.Remove(topic);
         await _db.SaveChangesAsync();
         return DeleteResult.Deleted;
+    }
+    // Все темы всех дисциплин (для раздела "Темы")
+    public async Task<List<TopicOverviewRowViewModel>> GetOverviewAsync(string? search)
+    {
+        var query = _db.Topics.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var pattern = $"%{search.Trim()}%";
+            query = query.Where(t => EF.Functions.ILike(t.Name, pattern));
+        }
+
+        return await query
+            .OrderBy(t => t.Discipline.Name).ThenBy(t => t.OrderIndex).ThenBy(t => t.Id)
+            .Select(t => new TopicOverviewRowViewModel
+            {
+                Id = t.Id,
+                Name = t.Name,
+                OrderIndex = t.OrderIndex,
+                DisciplineId = t.DisciplineId,
+                DisciplineName = t.Discipline.Name,
+                LecturesCount = t.Lectures.Count
+            })
+            .ToListAsync();
     }
 }

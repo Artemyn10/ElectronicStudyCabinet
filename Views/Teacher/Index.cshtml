@@ -1,10 +1,152 @@
-﻿@{
-    ViewData["Title"] = "Панель преподавателя";
+﻿@model TeacherDashboardViewModel
+@{
+    ViewData["Title"] = "Главная";
 }
 
-<h1 class="h3">Панель преподавателя</h1>
-<p>Здравствуйте, @User.Identity?.Name!</p>
+<h1 class="h3 mb-1">Панель преподавателя</h1>
+<p class="text-muted">Здравствуйте, @User.Identity?.Name!</p>
 
-<a asp-controller="Disciplines" asp-action="Index" class="btn btn-primary">Дисциплины</a>
+<!-- Статистика -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+        <a asp-controller="Disciplines" asp-action="Index" class="text-decoration-none text-reset">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Дисциплин</div>
+                    <div class="fs-2 fw-semibold">@Model.DisciplinesCount</div>
+                    <div class="small text-muted">опубликовано: @Model.PublishedDisciplinesCount</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Студентов</div>
+                <div class="fs-2 fw-semibold">@Model.StudentsCount</div>
+                <div class="small text-muted">зарегистрировано</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <a asp-controller="Lectures" asp-action="Index" class="text-decoration-none text-reset">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Лекций</div>
+                    <div class="fs-2 fw-semibold">@Model.LecturesCount</div>
+                    <div class="small text-muted">во всех дисциплинах</div>
+                </div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small">Незавершённых тестов</div>
+                <div class="fs-2 fw-semibold @(Model.UnfinishedAttemptsCount > 0 ? "text-warning" : "")">@Model.UnfinishedAttemptsCount</div>
+                <div class="small text-muted">начаты, но не отправлены</div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<p class="text-muted mt-3">Полноценная панель со статистикой появится на этапе 14.</p>
+@if (Model.PendingReviewsCount > 0)
+{
+    <div class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <span>Ответов, ожидающих вашей проверки: <strong>@Model.PendingReviewsCount</strong></span>
+        <a asp-controller="Reviews" asp-action="Index" class="btn btn-sm btn-warning">Перейти к проверке</a>
+    </div>
+}
+
+<!-- Последние результаты -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white fw-semibold">Последние результаты тестирования</div>
+
+    @if (!Model.LatestResults.Any())
+    {
+        <div class="card-body text-muted">Студенты ещё не проходили тесты.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Студент</th>
+                        <th>Лекция</th>
+                        <th>Результат</th>
+                        <th>Статус</th>
+                        <th>Дата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.LatestResults)
+                    {
+                        <tr>
+                            <td>@row.StudentName</td>
+                            <td>
+                                @row.LectureTitle
+                                <div class="text-muted small">@row.DisciplineName</div>
+                            </td>
+                            <td>@row.CorrectAnswers из @row.TotalQuestions · @row.ScorePercentage.ToString("0.#")%</td>
+                            <td>
+                                @if (row.IsPassed)
+                                {
+                                    <span class="badge bg-success">Пройден</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Не пройден</span>
+                                }
+                            </td>
+                            <td>@row.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Студенты, не завершившие дисциплины -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white fw-semibold">Студенты, не завершившие изучение дисциплин</div>
+
+    @if (!Model.UnfinishedStudents.Any())
+    {
+        <div class="card-body text-muted">Пока нет студентов, которые начали обучение и не закончили его.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Студент</th>
+                        <th>Дисциплина</th>
+                        <th>Завершено лекций</th>
+                        <th style="min-width: 10rem;">Прогресс</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.UnfinishedStudents)
+                    {
+                        <tr>
+                            <td>@row.StudentName</td>
+                            <td>@row.DisciplineName</td>
+                            <td>@row.CompletedLectures из @row.TotalLectures</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 0.5rem;">
+                                        <div class="progress-bar bg-success" style="width: @(row.ProgressPercent)%"></div>
+                                    </div>
+                                    <span class="small">@row.ProgressPercent%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

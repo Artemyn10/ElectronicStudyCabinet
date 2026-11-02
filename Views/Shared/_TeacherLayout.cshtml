@@ -1,0 +1,107 @@
+﻿@using ElectronicStudyCabinet.Services
+@inject IReviewService ReviewService
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
+    var pendingReviews = await ReviewService.CountPendingAsync();
+
+    string Active(bool condition) => condition ? "active" : "";
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Панель преподавателя</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <header>
+        <nav class="navbar navbar-dark bg-primary">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#sideMenu" aria-controls="sideMenu"
+                            aria-expanded="false" aria-label="Меню разделов">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <a class="navbar-brand fw-semibold mb-0" asp-controller="Teacher" asp-action="Index">
+                        Панель преподавателя
+                    </a>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <span class="navbar-text d-none d-sm-inline">@User.Identity?.Name</span>
+                    <a class="btn btn-outline-light btn-sm" asp-controller="Home" asp-action="Index">Сайт</a>
+                    <a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="ChangePassword">Пароль</a>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        <button type="submit" class="btn btn-light btn-sm">Выйти</button>
+                    </form>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid flex-grow-1">
+        <div class="row">
+            <nav id="sideMenu" class="col-lg-2 collapse d-lg-block bg-white border-end py-3 sidebar">
+                <div class="list-group list-group-flush">
+                    <a class="list-group-item list-group-item-action @Active(controller == "Teacher")"
+                       asp-controller="Teacher" asp-action="Index">Главная</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Disciplines")"
+                       asp-controller="Disciplines" asp-action="Index">Дисциплины</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Topics")"
+                       asp-controller="Topics" asp-action="Index">Темы</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Lectures" && action != "Materials")"
+                       asp-controller="Lectures" asp-action="Index">Лекции</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Lectures" && action == "Materials")"
+                       asp-controller="Lectures" asp-action="Materials">Учебные материалы</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "ControlQuestions")"
+                       asp-controller="ControlQuestions" asp-action="Overview">Контрольные вопросы</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Tests")"
+                       asp-controller="Tests" asp-action="Overview">Тесты</a>
+                    <a class="list-group-item list-group-item-action @Active(controller == "Students")"
+                       asp-controller="Students" asp-action="Index">Студенты</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Results")"
+                       asp-controller="Results" asp-action="Index">Результаты</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Progress")"
+                       asp-controller="Progress" asp-action="Index">Прогресс обучения</a>
+
+                    <a class="list-group-item list-group-item-action @Active(controller == "Reports")"
+                       asp-controller="Reports" asp-action="Index">Отчёты</a>
+
+                    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center @Active(controller == "Reviews")"
+                       asp-controller="Reviews" asp-action="Index">
+                        <span>Проверка ответов</span>
+                        @if (pendingReviews > 0)
+                        {
+                            <span class="badge bg-danger rounded-pill">@pendingReviews</span>
+                        }
+                    </a>
+                    <a class="list-group-item list-group-item-action @Active(controller == "Audit")"
+                       asp-controller="Audit" asp-action="Index">Журнал действий</a>
+                </div>
+            </nav>
+
+            <main class="col-lg-10 py-4 px-lg-4" role="main">
+                <partial name="_Alerts" />
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -3,6 +3,7 @@ using ElectronicStudyCabinet.Services;
 using ElectronicStudyCabinet.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace ElectronicStudyCabinet.Controllers;
 
@@ -14,12 +15,15 @@ public class LecturesController : Controller
 
     private readonly ILectureService _lectures;
     private readonly IFileStorageService _storage;
+    private readonly IAuditService _audit;
 
-    public LecturesController(ILectureService lectures, IFileStorageService storage)
+    public LecturesController(ILectureService lectures, IFileStorageService storage, IAuditService audit)
     {
         _lectures = lectures;
         _storage = storage;
+        _audit = audit;
     }
+    private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
     // Список всех лекций с поиском по названию
     public async Task<IActionResult> Index(string? search)
@@ -105,9 +109,15 @@ public class LecturesController : Controller
         var result = await _lectures.DeleteAsync(id);
 
         if (result == DeleteResult.Deleted)
+        {
             TempData["Success"] = "Лекция удалена";
+            await _audit.LogAsync(UserId, AuditActions.DeleteLecture,
+                $"Удалена лекция «{lecture.Title}» ({lecture.DisciplineName})");
+        }
         else if (result == DeleteResult.HasChildren)
+        {
             TempData["Error"] = "Нельзя удалить лекцию, у которой есть вопросы, тест или результаты студентов.";
+        }
 
         return RedirectToAction("Details", "Disciplines", new { id = lecture.DisciplineId });
     }
@@ -153,5 +163,18 @@ public class LecturesController : Controller
             return RedirectToAction("Index", "Disciplines");
 
         return RedirectToAction("Details", "Disciplines", new { id = lecture.DisciplineId });
+    }
+    // Раздел "Учебные материалы": файлы всех лекций
+    public async Task<IActionResult> Materials(string? search, bool missingOnly = false)
+    {
+        ViewData["Search"] = search;
+        ViewData["MissingOnly"] = missingOnly;
+
+        var items = await _lectures.GetListAsync(search);
+
+        if (missingOnly)
+            items = items.Where(i => string.IsNullOrEmpty(i.MaterialFileName)).ToList();
+
+        return View(items);
     }
 }
