@@ -13,6 +13,47 @@
 
 <h1 class="h3 mb-0">@Model.FullName</h1>
 <div class="text-muted mb-3">@Model.UserName · @Model.Email</div>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5">Группа</h2>
+
+        <p class="mb-2">
+            @if (!string.IsNullOrEmpty(Model.GroupName))
+            {
+                <span>Группа: <strong>@Model.GroupName</strong> · Специальность: <strong>@Model.SpecialtyName</strong></span>
+            }
+            else
+            {
+                <span class="text-muted">Студент не состоит в группе.</span>
+            }
+        </p>
+
+        <form asp-action="AssignGroup" method="post" class="row g-2">
+            <input type="hidden" name="studentId" value="@Model.Id" />
+
+            <div class="col-12 col-md-6">
+                <select name="groupId" class="form-select">
+                    <option value="" selected="@(Model.GroupId == null)">Без группы</option>
+                    @foreach (var group in Model.Groups)
+                    {
+                        <option value="@group.Id" selected="@(Model.GroupId == group.Id)">@group.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Сохранить группу</button>
+            </div>
+        </form>
+
+        @if (!Model.Groups.Any())
+        {
+            <div class="form-text">
+                Групп пока нет. <a asp-controller="Groups" asp-action="Create">Создать группу</a>
+            </div>
+        }
+    </div>
+</div>
 
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">

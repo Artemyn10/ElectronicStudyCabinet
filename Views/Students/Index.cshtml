@@ -6,9 +6,19 @@
 <h1 class="h3 mb-3">Студенты</h1>
 
 <form method="get" class="row g-2 mb-3">
-    <div class="col-12 col-md-5">
+    <div class="col-12 col-md-4">
         <input type="text" name="search" value="@Model.Search" class="form-control"
                placeholder="Поиск по ФИО, логину или почте" />
+    </div>
+    <div class="col-12 col-md-3">
+        <select name="groupId" class="form-select">
+            <option value="" selected="@(Model.GroupId == null)">Все группы</option>
+            <option value="0" selected="@(Model.GroupId == 0)">Без группы</option>
+            @foreach (var group in Model.Groups)
+            {
+                <option value="@group.Id" selected="@(Model.GroupId == group.Id)">@group.Name</option>
+            }
+        </select>
     </div>
     <div class="col-12 col-md-3">
         <select name="status" class="form-select">
@@ -35,6 +45,7 @@ else
             <thead class="table-light">
                 <tr>
                     <th>Студент</th>
+                    <th>Группа</th>
                     <th>Дисциплин начато</th>
                     <th style="min-width: 11rem;">Прогресс</th>
                     <th>Тесты</th>
@@ -49,6 +60,17 @@ else
                         <td>
                             <a asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.FullName</a>
                             <div class="text-muted small">@item.UserName · @item.Email</div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.GroupName))
+                            {
+                                <span class="fw-semibold">@item.GroupName</span>
+                                <div class="text-muted small">@item.SpecialtyName</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">без группы</span>
+                            }
                         </td>
                         <td>@item.StartedDisciplines</td>
                         <td>

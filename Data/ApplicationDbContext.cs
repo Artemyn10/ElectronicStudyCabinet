@@ -24,6 +24,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<TestAttempt> TestAttempts => Set<TestAttempt>();
     public DbSet<LectureProgress> LectureProgress => Set<LectureProgress>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Specialty> Specialties => Set<Specialty>();
+    public DbSet<StudentGroup> StudentGroups => Set<StudentGroup>();
+    public DbSet<GroupMembership> GroupMemberships => Set<GroupMembership>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -157,6 +160,39 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             // Одна запись прогресса на студента и лекцию
             e.HasIndex(p => new { p.StudentId, p.LectureId }).IsUnique();
             e.Property(p => p.Status).HasConversion<string>().HasMaxLength(30);
+        });
+        // ===== Специальности и группы =====
+        builder.Entity<Specialty>(e =>
+        {
+            // Названия специальностей не повторяются
+            e.HasIndex(s => s.Name).IsUnique();
+        });
+
+        builder.Entity<StudentGroup>(e =>
+        {
+            e.HasOne(g => g.Specialty)
+                .WithMany(s => s.Groups)
+                .HasForeignKey(g => g.SpecialtyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Названия групп не повторяются
+            e.HasIndex(g => g.Name).IsUnique();
+        });
+
+        builder.Entity<GroupMembership>(e =>
+        {
+            e.HasOne(m => m.Student)
+                .WithMany()
+                .HasForeignKey(m => m.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            e.HasOne(m => m.StudentGroup)
+                .WithMany(g => g.Members)
+                .HasForeignKey(m => m.StudentGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Студент состоит не более чем в одной группе
+            e.HasIndex(m => m.StudentId).IsUnique();
         });
 
         // ===== Журнал действий =====

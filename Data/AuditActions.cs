@@ -12,6 +12,11 @@ public static class AuditActions
     public const string DeleteTest = "DeleteTest";
     public const string TestPublished = "TestPublished";
     public const string TestUnpublished = "TestUnpublished";
+    public const string GroupCreated = "GroupCreated";
+    public const string GroupDeleted = "GroupDeleted";
+    public const string GroupMembersAdded = "GroupMembersAdded";
+    public const string GroupMemberRemoved = "GroupMemberRemoved";
+    public const string GroupChanged = "GroupChanged";
 
     // Понятные названия для страницы журнала
     private static readonly Dictionary<string, string> Labels = new()
@@ -24,7 +29,12 @@ public static class AuditActions
         [DeleteLecture] = "Удаление лекции",
         [DeleteTest] = "Удаление теста",
         [TestPublished] = "Публикация теста",
-        [TestUnpublished] = "Снятие теста с публикации"
+        [TestUnpublished] = "Снятие теста с публикации",
+        [GroupCreated] = "Создание группы",
+        [GroupDeleted] = "Удаление группы",
+        [GroupMembersAdded] = "Добавление студентов в группу",
+        [GroupMemberRemoved] = "Исключение студента из группы",
+        [GroupChanged] = "Изменение группы студента",
     };
 
     public static string GetLabel(string action)

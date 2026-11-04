@@ -30,6 +30,13 @@ public class TeacherDashboardViewModel
     public int LecturesCount { get; set; }
     public int StudentsCount { get; set; }
     public int UnfinishedAttemptsCount { get; set; }
+    // Тесты
+    public int TestsCount { get; set; }
+    public int PublishedTestsCount { get; set; }
+
+    // Завершённые попытки прохождения тестов студентами
+    public int CompletedAttemptsCount { get; set; }
+    public int PassedAttemptsCount { get; set; }
     public int PendingReviewsCount { get; set; }
 
     public List<DashboardResultRowViewModel> LatestResults { get; set; } = new();

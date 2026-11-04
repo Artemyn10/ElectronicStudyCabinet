@@ -8,7 +8,7 @@
 
 <!-- Статистика -->
 <div class="row g-3 mb-4">
-    <div class="col-6 col-xl-3">
+    <div class="col-12 col-sm-6 col-lg-4">
         <a asp-controller="Disciplines" asp-action="Index" class="text-decoration-none text-reset">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
@@ -19,16 +19,20 @@
             </div>
         </a>
     </div>
-    <div class="col-6 col-xl-3">
-        <div class="card shadow-sm h-100">
-            <div class="card-body">
-                <div class="text-muted small">Студентов</div>
-                <div class="fs-2 fw-semibold">@Model.StudentsCount</div>
-                <div class="small text-muted">зарегистрировано</div>
+
+    <div class="col-12 col-sm-6 col-lg-4">
+        <a asp-controller="Students" asp-action="Index" class="text-decoration-none text-reset">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Студентов</div>
+                    <div class="fs-2 fw-semibold">@Model.StudentsCount</div>
+                    <div class="small text-muted">зарегистрировано</div>
+                </div>
             </div>
-        </div>
+        </a>
     </div>
-    <div class="col-6 col-xl-3">
+
+    <div class="col-12 col-sm-6 col-lg-4">
         <a asp-controller="Lectures" asp-action="Index" class="text-decoration-none text-reset">
             <div class="card shadow-sm h-100">
                 <div class="card-body">
@@ -39,7 +43,32 @@
             </div>
         </a>
     </div>
-    <div class="col-6 col-xl-3">
+
+    <div class="col-12 col-sm-6 col-lg-4">
+        <a asp-controller="Tests" asp-action="Overview" class="text-decoration-none text-reset">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Тестов</div>
+                    <div class="fs-2 fw-semibold">@Model.TestsCount</div>
+                    <div class="small text-muted">опубликовано: @Model.PublishedTestsCount</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-4">
+        <a asp-controller="Results" asp-action="Index" class="text-decoration-none text-reset">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Завершённых тестов</div>
+                    <div class="fs-2 fw-semibold text-success">@Model.CompletedAttemptsCount</div>
+                    <div class="small text-muted">пройдено студентами · успешных: @Model.PassedAttemptsCount</div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-sm-6 col-lg-4">
         <div class="card shadow-sm h-100">
             <div class="card-body">
                 <div class="text-muted small">Незавершённых тестов</div>

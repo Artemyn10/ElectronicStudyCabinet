@@ -5,6 +5,13 @@
 
 <h1 class="h3 mb-1">Личный кабинет студента</h1>
 <p class="text-muted">Здравствуйте, <strong>@Model.FullName</strong>!</p>
+@if (!string.IsNullOrEmpty(Model.GroupName))
+{
+    <p class="mb-3">
+        Группа: <strong>@Model.GroupName</strong> ·
+        Специальность: <strong>@Model.SpecialtyName</strong>
+    </p>
+}
 
 <!-- Общая сводка -->
 <div class="row g-3 mb-4">

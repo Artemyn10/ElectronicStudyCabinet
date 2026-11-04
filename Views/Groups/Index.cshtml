@@ -1,0 +1,78 @@
+﻿@model GroupsListViewModel
+@{
+    ViewData["Title"] = "Группы";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Группы студентов</h1>
+    <a asp-action="Create" class="btn btn-primary">Создать группу</a>
+</div>
+
+@if (!Model.Specialties.Any())
+{
+    <div class="alert alert-warning">
+        Чтобы создать группу, сначала добавьте специальность.
+        <a asp-controller="Specialties" asp-action="Create">Добавить специальность</a>
+    </div>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-12 col-md-4">
+        <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Поиск по названию группы" />
+    </div>
+    <div class="col-12 col-md-4">
+        <select name="specialtyId" class="form-select">
+            <option value="" selected="@(Model.SpecialtyId == null)">Все специальности</option>
+            @foreach (var specialty in Model.Specialties)
+            {
+                <option value="@specialty.Id" selected="@(Model.SpecialtyId == specialty.Id)">@specialty.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-outline-primary">Найти</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Сбросить</a>
+    </div>
+</form>
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-info">Групп не найдено.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Группа</th>
+                    <th>Специальность</th>
+                    <th class="text-center">Студентов</th>
+                    <th>Описание</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="fw-semibold text-decoration-none">@item.Name</a>
+                        </td>
+                        <td>@item.SpecialtyName</td>
+                        <td class="text-center">@item.StudentsCount</td>
+                        <td class="text-muted small">@item.Description</td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Состав</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">Изменить</a>
+                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline"
+                                  data-confirm="Удалить группу «@item.Name»?">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

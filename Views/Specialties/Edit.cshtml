@@ -1,0 +1,28 @@
+﻿@model SpecialtyFormViewModel
+@{
+    ViewData["Title"] = "Изменение специальности";
+}
+
+<div class="row">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">Изменение специальности</h1>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    <input type="hidden" asp-for="Id" />
+
+                    <partial name="_SpecialtyForm" model="Model" />
+
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отмена</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -22,6 +22,8 @@ public class StudentRowViewModel
     public double? AverageScore { get; set; }
 
     public DateTime? LastActivity { get; set; }
+    public string? GroupName { get; set; }
+    public string? SpecialtyName { get; set; }
 }
 
 public class StudentsListViewModel
@@ -29,6 +31,8 @@ public class StudentsListViewModel
     public string? Search { get; set; }
     public string? Status { get; set; }
     public List<StudentRowViewModel> Items { get; set; } = new();
+    public int? GroupId { get; set; }
+    public List<SimpleOptionViewModel> Groups { get; set; } = new();
 }
 
 public class StudentDetailsViewModel
@@ -41,6 +45,10 @@ public class StudentDetailsViewModel
     // Те же данные, что студент видит в своём кабинете
     public StudentCabinetViewModel Cabinet { get; set; } = new();
     public List<LockedLectureOptionViewModel> LockedLectures { get; set; } = new();
+    public int? GroupId { get; set; }
+    public string? GroupName { get; set; }
+    public string? SpecialtyName { get; set; }
+    public List<SimpleOptionViewModel> Groups { get; set; } = new();
 }
 
 // ===== Результаты =====

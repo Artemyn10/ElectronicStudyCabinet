@@ -65,4 +65,6 @@ public class StudentCabinetViewModel
 
     public List<CabinetDisciplineViewModel> Disciplines { get; set; } = new();
     public List<CabinetResultRowViewModel> Results { get; set; } = new();
+    public string? GroupName { get; set; }
+    public string? SpecialtyName { get; set; }
 }

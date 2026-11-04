@@ -61,6 +61,18 @@ public class StudentCabinetService : IStudentCabinetService
         }
 
         var model = new StudentCabinetViewModel { FullName = fullName };
+        // Группа и специальность студента (назначает преподаватель)
+        var membership = await _db.GroupMemberships
+            .AsNoTracking()
+            .Where(m => m.StudentId == studentId)
+            .Select(m => new { m.StudentGroup.Name, SpecialtyName = m.StudentGroup.Specialty.Name })
+            .FirstOrDefaultAsync();
+
+        if (membership != null)
+        {
+            model.GroupName = membership.Name;
+            model.SpecialtyName = membership.SpecialtyName;
+        }
         var results = new List<CabinetResultRowViewModel>();
 
         foreach (var discipline in disciplines)

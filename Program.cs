@@ -100,6 +100,9 @@ builder.Services.AddScoped<IStudentCabinetService, StudentCabinetService>();
 builder.Services.AddScoped<ITeacherReportService, TeacherReportService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IManualUnlockService, ManualUnlockService>();
+builder.Services.AddScoped<ISpecialtyService, SpecialtyService>();
+builder.Services.AddScoped<IGroupService, GroupService>();
+
 
 var app = builder.Build();
 
@@ -115,6 +118,8 @@ using (var scope = app.Services.CreateScope())
         await DemoDataSeeder.SeedAsync(scope.ServiceProvider);
         await DemoDataSeeder.SeedExtrasAsync(scope.ServiceProvider);
         await DemoDataSeeder.SeedTestsAsync(scope.ServiceProvider);
+        await DemoDataSeeder.SeedTestsAsync(scope.ServiceProvider);
+        await DemoDataSeeder.SeedGroupsAsync(scope.ServiceProvider);
         logger.LogInformation("База данных готова.");
     }
     catch (Exception ex)

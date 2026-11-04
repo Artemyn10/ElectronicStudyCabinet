@@ -531,4 +531,52 @@ public static class DemoDataSeeder
         await db.SaveChangesAsync();
         logger.LogInformation("Добавлены демонстрационные тесты: {Count}.", added);
     }
+    // Демонстрационные специальности и группы (если их в базе ещё нет)
+    public static async Task SeedGroupsAsync(IServiceProvider services)
+    {
+        var db = services.GetRequiredService<ApplicationDbContext>();
+        var configuration = services.GetRequiredService<IConfiguration>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
+        if (!configuration.GetValue<bool>("Seed:DemoData", true))
+            return;
+
+        if (await db.Specialties.AnyAsync())
+            return;
+
+        var programming = new Specialty
+        {
+            Name = "Информационные системы и программирование",
+            Code = "09.02.07"
+        };
+        programming.Groups.Add(new StudentGroup { Name = "ИС-21", Description = "Первый курс, набор 2026" });
+        programming.Groups.Add(new StudentGroup { Name = "ИС-22", Description = "Первый курс, набор 2026" });
+
+        var administration = new Specialty
+        {
+            Name = "Сетевое и системное администрирование",
+            Code = "09.02.06"
+        };
+        administration.Groups.Add(new StudentGroup { Name = "СА-21", Description = "Первый курс, набор 2026" });
+
+        db.Specialties.AddRange(programming, administration);
+        await db.SaveChangesAsync();
+
+        // Демонстрационного студента добавляем в группу ИС-21
+        var demoStudent = await db.Users.FirstOrDefaultAsync(u => u.UserName == "student");
+        var group = await db.StudentGroups.FirstOrDefaultAsync(g => g.Name == "ИС-21");
+
+        if (demoStudent != null && group != null
+            && !await db.GroupMemberships.AnyAsync(m => m.StudentId == demoStudent.Id))
+        {
+            db.GroupMemberships.Add(new GroupMembership
+            {
+                StudentId = demoStudent.Id,
+                StudentGroupId = group.Id
+            });
+            await db.SaveChangesAsync();
+        }
+
+        logger.LogInformation("Добавлены демонстрационные специальности и группы.");
+    }
 }

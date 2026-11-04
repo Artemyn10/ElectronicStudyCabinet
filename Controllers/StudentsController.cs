@@ -11,20 +11,25 @@ public class StudentsController : Controller
 {
     private readonly ITeacherReportService _reports;
     private readonly IManualUnlockService _unlock;
+    private readonly IGroupService _groups;
 
-    public StudentsController(ITeacherReportService reports, IManualUnlockService unlock)
+    public StudentsController(
+        ITeacherReportService reports,
+        IManualUnlockService unlock,
+        IGroupService groups)
     {
         _reports = reports;
         _unlock = unlock;
+        _groups = groups;
     }
 
     // Id преподавателя берём из его авторизации
     private string TeacherId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-    // /Students?search=...&status=inprogress
-    public async Task<IActionResult> Index(string? search, string? status)
+    // /Students?search=...&status=inprogress&groupId=3
+    public async Task<IActionResult> Index(string? search, string? status, int? groupId)
     {
-        var model = await _reports.GetStudentsAsync(search, status);
+        var model = await _reports.GetStudentsAsync(search, status, groupId);
         return View(model);
     }
 
@@ -36,6 +41,19 @@ public class StudentsController : Controller
             return NotFound();
 
         return View(model);
+    }
+
+    // Назначение или перевод студента в группу (пустое значение: без группы)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AssignGroup(string studentId, int? groupId)
+    {
+        if (await _groups.AssignAsync(TeacherId, studentId, groupId))
+            TempData["Success"] = "Группа студента сохранена";
+        else
+            TempData["Error"] = "Не удалось изменить группу: студент или группа не найдены.";
+
+        return RedirectToAction(nameof(Details), new { id = studentId });
     }
 
     // Ручное открытие лекции конкретному студенту

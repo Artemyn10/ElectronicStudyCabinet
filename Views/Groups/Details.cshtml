@@ -1,0 +1,157 @@
+﻿@model GroupDetailsViewModel
+@{
+    ViewData["Title"] = "Группа " + Model.Name;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-action="Index">Группы</a></li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <div>
+                <h1 class="h3 mb-1">Группа @Model.Name</h1>
+                <div class="text-muted">
+                    Специальность: @Model.SpecialtyName
+                    @if (!string.IsNullOrEmpty(Model.SpecialtyCode))
+                    {
+                        <span>(@Model.SpecialtyCode)</span>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <p class="mt-2 mb-0">@Model.Description</p>
+                }
+            </div>
+            <div class="text-nowrap">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Изменить</a>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline"
+                      data-confirm="Удалить группу «@Model.Name»?">
+                    <button type="submit" class="btn btn-outline-danger"
+                            disabled="@(Model.Members.Any())"
+                            title="@(Model.Members.Any() ? "Сначала исключите студентов из группы" : "Удалить группу")">
+                        Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+            <div class="col-6 col-md-3">
+                <div class="text-muted small">Студентов в группе</div>
+                <div class="fs-3 fw-semibold">@Model.Members.Count</div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="text-muted small">Средний прогресс</div>
+                <div class="fs-3 fw-semibold">@Model.AverageProgress%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Добавление студентов -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5">Добавить студентов в группу</h2>
+
+        @if (!Model.AvailableStudents.Any())
+        {
+            <p class="text-muted mb-0">
+                Свободных студентов нет: все зарегистрированные студенты уже состоят в группах.
+                Студента из другой группы можно перевести на его странице в разделе «Студенты».
+            </p>
+        }
+        else
+        {
+            <p class="text-muted small">Показаны студенты, которые ещё не состоят ни в одной группе.</p>
+
+            <form asp-action="AddMembers" method="post">
+                <input type="hidden" name="groupId" value="@Model.Id" />
+
+                <div class="border rounded p-2 mb-3" style="max-height: 14rem; overflow-y: auto;">
+                    @foreach (var student in Model.AvailableStudents)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="studentIds"
+                                   value="@student.Id" id="student_@student.Id" />
+                            <label class="form-check-label" for="student_@student.Id">
+                                @student.FullName <span class="text-muted small">(@student.UserName)</span>
+                            </label>
+                        </div>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary">Добавить выбранных</button>
+            </form>
+        }
+    </div>
+</div>
+
+<!-- Состав группы -->
+<h2 class="h4 mb-3">Состав группы</h2>
+
+@if (!Model.Members.Any())
+{
+    <div class="alert alert-info">В группе пока нет студентов.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle bg-white shadow-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Студент</th>
+                    <th style="min-width: 11rem;">Прогресс</th>
+                    <th>Тесты</th>
+                    <th>Последняя активность</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in Model.Members)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Students" asp-action="Details" asp-route-id="@member.Id"
+                               class="fw-semibold text-decoration-none">@member.FullName</a>
+                            <div class="text-muted small">@member.UserName · @member.Email</div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 0.5rem;">
+                                    <div class="progress-bar bg-success" style="width: @(member.ProgressPercent)%"></div>
+                                </div>
+                                <span class="small">@member.ProgressPercent%</span>
+                            </div>
+                            <div class="text-muted small">@member.CompletedLectures из @member.TotalLectures лекций</div>
+                        </td>
+                        <td class="small">
+                            попыток: @member.AttemptsCount, пройдено: @member.PassedAttempts
+                            @if (member.AverageScore != null)
+                            {
+                                <div class="text-muted">средний результат @member.AverageScore.Value.ToString("0.#")%</div>
+                            }
+                    </td>
+                    <td class="small">
+                        @(member.LastActivity != null
+                                            ? member.LastActivity.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                            : "нет")
+                </td>
+                <td class="text-end text-nowrap">
+                    <form asp-action="RemoveMember" method="post" class="d-inline"
+                          data-confirm="Исключить студента «@member.FullName» из группы?">
+                        <input type="hidden" name="groupId" value="@Model.Id" />
+                        <input type="hidden" name="studentId" value="@member.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Исключить</button>
+                    </form>
+                </td>
+            </tr>
+                        }
+            </tbody>
+        </table>
+    </div>
+}

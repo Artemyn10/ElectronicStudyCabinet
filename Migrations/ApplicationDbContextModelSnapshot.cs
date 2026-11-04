@@ -251,6 +251,34 @@ namespace ElectronicStudyCabinet.Migrations
                     b.ToTable("Disciplines");
                 });
 
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.GroupMembership", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AddedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("StudentGroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("StudentId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StudentGroupId");
+
+                    b.HasIndex("StudentId")
+                        .IsUnique();
+
+                    b.ToTable("GroupMemberships");
+                });
+
             modelBuilder.Entity("ElectronicStudyCabinet.Models.Lecture", b =>
                 {
                     b.Property<int>("Id")
@@ -345,6 +373,31 @@ namespace ElectronicStudyCabinet.Migrations
                     b.ToTable("LectureProgress");
                 });
 
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.Specialty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Specialties");
+                });
+
             modelBuilder.Entity("ElectronicStudyCabinet.Models.StudentAnswer", b =>
                 {
                     b.Property<int>("Id")
@@ -389,6 +442,39 @@ namespace ElectronicStudyCabinet.Migrations
                         .IsUnique();
 
                     b.ToTable("StudentAnswers");
+                });
+
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.StudentGroup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("SpecialtyId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("SpecialtyId");
+
+                    b.ToTable("StudentGroups");
                 });
 
             modelBuilder.Entity("ElectronicStudyCabinet.Models.Test", b =>
@@ -694,6 +780,25 @@ namespace ElectronicStudyCabinet.Migrations
                     b.Navigation("ControlQuestion");
                 });
 
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.GroupMembership", b =>
+                {
+                    b.HasOne("ElectronicStudyCabinet.Models.StudentGroup", "StudentGroup")
+                        .WithMany("Members")
+                        .HasForeignKey("StudentGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ElectronicStudyCabinet.Models.ApplicationUser", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Student");
+
+                    b.Navigation("StudentGroup");
+                });
+
             modelBuilder.Entity("ElectronicStudyCabinet.Models.Lecture", b =>
                 {
                     b.HasOne("ElectronicStudyCabinet.Models.Topic", "Topic")
@@ -741,6 +846,17 @@ namespace ElectronicStudyCabinet.Migrations
                     b.Navigation("ControlQuestion");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.StudentGroup", b =>
+                {
+                    b.HasOne("ElectronicStudyCabinet.Models.Specialty", "Specialty")
+                        .WithMany("Groups")
+                        .HasForeignKey("SpecialtyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Specialty");
                 });
 
             modelBuilder.Entity("ElectronicStudyCabinet.Models.Test", b =>
@@ -865,6 +981,16 @@ namespace ElectronicStudyCabinet.Migrations
                     b.Navigation("ProgressRecords");
 
                     b.Navigation("Test");
+                });
+
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.Specialty", b =>
+                {
+                    b.Navigation("Groups");
+                });
+
+            modelBuilder.Entity("ElectronicStudyCabinet.Models.StudentGroup", b =>
+                {
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("ElectronicStudyCabinet.Models.Test", b =>

@@ -27,12 +27,20 @@ public class TeacherDashboardService : ITeacherDashboardService
             PublishedDisciplinesCount = await _db.Disciplines.CountAsync(d => d.IsPublished),
             LecturesCount = await _db.Lectures.CountAsync(),
 
+            // Тесты: всего и опубликованных
+            TestsCount = await _db.Tests.CountAsync(),
+            PublishedTestsCount = await _db.Tests.CountAsync(t => t.IsPublished),
+
+            // Завершённые попытки: студент отправил ответы; из них успешные
+            CompletedAttemptsCount = await _db.TestAttempts.CountAsync(a => a.CompletedAt != null),
+            PassedAttemptsCount = await _db.TestAttempts.CountAsync(a => a.CompletedAt != null && a.IsPassed),
+
             // Попытки, которые студент начал, но ещё не завершил
             UnfinishedAttemptsCount = await _db.TestAttempts.CountAsync(a => a.CompletedAt == null),
 
             // Ответы, ожидающие ручной проверки
             PendingReviewsCount = await _db.StudentAnswers
-                .CountAsync(a => a.ReviewStatus == ReviewStatus.PendingReview)
+        .CountAsync(a => a.ReviewStatus == ReviewStatus.PendingReview)
         };
 
         // Студенты = пользователи с ролью Student

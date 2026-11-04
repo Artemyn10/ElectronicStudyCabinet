@@ -7,7 +7,7 @@ namespace ElectronicStudyCabinet.Services;
 
 public interface ITeacherReportService
 {
-    Task<StudentsListViewModel> GetStudentsAsync(string? search, string? status);
+    Task<StudentsListViewModel> GetStudentsAsync(string? search, string? status, int? groupId);
     Task<StudentDetailsViewModel?> GetStudentDetailsAsync(string studentId);
     Task<ResultsPageViewModel> GetResultsAsync(int? disciplineId, string? student, string? status, int page);
     Task<ProgressPageViewModel> GetProgressAsync(int? disciplineId);
@@ -37,7 +37,7 @@ public class TeacherReportService : ITeacherReportService
     private record DisciplineTotals(int Id, string Name, int Total);
     private record ProgressRow(string StudentId, int DisciplineId, LectureStatus Status);
     private record AttemptRow(string StudentId, int DisciplineId, bool Completed, DateTime Time, double Score, bool IsPassed);
-
+    private record GroupInfo(int GroupId, string GroupName, string SpecialtyName);
     private class ReportData
     {
         public List<StudentInfo> Students { get; set; } = new();
@@ -57,10 +57,32 @@ public class TeacherReportService : ITeacherReportService
 
     // ===== Студенты =====
 
-    public async Task<StudentsListViewModel> GetStudentsAsync(string? search, string? status)
+    public async Task<StudentsListViewModel> GetStudentsAsync(string? search, string? status, int? groupId)
     {
         var data = await LoadDataAsync(search);
         var rows = BuildStudentRows(data);
+
+        // Группа и специальность каждого студента
+        var groups = await LoadGroupsAsync(rows.Select(r => r.Id).ToList());
+
+        foreach (var row in rows)
+        {
+            if (groups.TryGetValue(row.Id, out var group))
+            {
+                row.GroupName = group.GroupName;
+                row.SpecialtyName = group.SpecialtyName;
+            }
+        }
+
+        // Фильтр по группе: 0 означает "Без группы"
+        if (groupId != null)
+        {
+            rows = rows
+                .Where(r => groupId == 0
+                    ? !groups.ContainsKey(r.Id)
+                    : groups.TryGetValue(r.Id, out var g) && g.GroupId == groupId)
+                .ToList();
+        }
 
         rows = status switch
         {
@@ -70,7 +92,14 @@ public class TeacherReportService : ITeacherReportService
             _ => rows
         };
 
-        return new StudentsListViewModel { Search = search, Status = status, Items = rows };
+        return new StudentsListViewModel
+        {
+            Search = search,
+            Status = status,
+            GroupId = groupId,
+            Items = rows,
+            Groups = await LoadGroupOptionsAsync()
+        };
     }
 
     public async Task<StudentDetailsViewModel?> GetStudentDetailsAsync(string studentId)
@@ -96,6 +125,17 @@ public class TeacherReportService : ITeacherReportService
                 }))
             .ToList();
 
+        var membership = await _db.GroupMemberships
+            .AsNoTracking()
+            .Where(m => m.StudentId == studentId)
+            .Select(m => new
+            {
+                m.StudentGroupId,
+                GroupName = m.StudentGroup.Name,
+                SpecialtyName = m.StudentGroup.Specialty.Name
+            })
+            .FirstOrDefaultAsync();
+
         return new StudentDetailsViewModel
         {
             Id = user.Id,
@@ -103,7 +143,11 @@ public class TeacherReportService : ITeacherReportService
             UserName = user.UserName,
             Email = user.Email,
             Cabinet = cabinet,
-            LockedLectures = lockedLectures
+            LockedLectures = lockedLectures,
+            GroupId = membership?.StudentGroupId,
+            GroupName = membership?.GroupName,
+            SpecialtyName = membership?.SpecialtyName,
+            Groups = await LoadGroupOptionsAsync()
         };
     }
 
@@ -369,5 +413,33 @@ public class TeacherReportService : ITeacherReportService
     private static int Percent(int part, int total)
     {
         return total == 0 ? 0 : (int)Math.Round(part * 100.0 / total);
+    }
+    // Группа и специальность для списка студентов: Id студента -> данные группы
+    private async Task<Dictionary<string, GroupInfo>> LoadGroupsAsync(List<string> studentIds)
+    {
+        return (await _db.GroupMemberships
+                .AsNoTracking()
+                .Where(m => studentIds.Contains(m.StudentId))
+                .Select(m => new
+                {
+                    m.StudentId,
+                    m.StudentGroupId,
+                    GroupName = m.StudentGroup.Name,
+                    SpecialtyName = m.StudentGroup.Specialty.Name
+                })
+                .ToListAsync())
+            .ToDictionary(x => x.StudentId, x => new GroupInfo(x.StudentGroupId, x.GroupName, x.SpecialtyName));
+    }
+
+    // Список групп для выпадающих полей: "ИС-21 — Информационные системы..."
+    private async Task<List<SimpleOptionViewModel>> LoadGroupOptionsAsync()
+    {
+        return (await _db.StudentGroups
+                .AsNoTracking()
+                .OrderBy(g => g.Name)
+                .Select(g => new { g.Id, g.Name, Specialty = g.Specialty.Name })
+                .ToListAsync())
+            .Select(g => new SimpleOptionViewModel { Id = g.Id, Name = $"{g.Name} — {g.Specialty}" })
+            .ToList();
     }
 }
